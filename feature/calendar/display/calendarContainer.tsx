@@ -2,7 +2,7 @@ import React from "react";
 import CalendarDisplay from "./calendarDisplay";
 import Footer from "@/components/display/Footer";
 
-const CalendarContainer: React.FC = () => {
+const CalendarContainer = () => {
   return (
     <div className="flex flex-col min-h-screen w-full">
       <div className="flex-1">
@@ -12,5 +12,6 @@ const CalendarContainer: React.FC = () => {
     </div>
   );
 };
+
 
 export default CalendarContainer;
