@@ -13,6 +13,9 @@ const HomeDisplay = () => {
     const [partnerId, setPartnerId] = useState<string | null>(null);
     const [userGender, setUserGender] = useState<string | null>(null);
     const [partnerGender, setPartnerGender] = useState<string | null>(null);
+    const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+    const [sentInvites, setSentInvites] = useState<any[]>([]);
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
         fetchUserData();
@@ -111,6 +114,134 @@ const HomeDisplay = () => {
         }
     };
 
+    // 获取当前登录用户
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        fetchUser();
+    }, []);
+
+    // 查询收到的邀请
+    useEffect(() => {
+        const fetchInvites = async () => {
+            if (!user) {
+                console.log('【查询邀请】用户未登录，无法查询邀请');
+                return;
+            }
+            console.log('【查询邀请】开始查询收到的邀请，当前用户ID:', user.id);
+            
+            const { data, error } = await supabase
+                .from('Invite')
+                .select(`
+                    *,
+                    from_user:from_uid (
+                        uid,
+                        name
+                    )
+                `)
+                .eq('to_uid', user.id)
+                .eq('status', 'pending');
+            
+            if (error) {
+                console.error('【查询邀请】查询收到的邀请失败:', error);
+                return;
+            }
+            
+            console.log('【查询邀请】收到的邀请数据:', data);
+            setPendingInvites(data || []);
+        };
+        fetchInvites();
+    }, [user]);
+
+    // 查询自己发出的邀请
+    useEffect(() => {
+        const fetchSentInvites = async () => {
+            if (!user) {
+                console.log('【查询邀请】用户未登录，无法查询已发送的邀请');
+                return;
+            }
+            console.log('【查询邀请】开始查询已发送的邀请，当前用户ID:', user.id);
+            
+            const { data, error } = await supabase
+                .from('Invite')
+                .select(`
+                    *,
+                    to_user:to_uid (
+                        uid,
+                        name
+                    )
+                `)
+                .eq('from_uid', user.id)
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                console.error('【查询邀请】查询已发送的邀请失败:', error);
+                return;
+            }
+            
+            console.log('【查询邀请】已发送的邀请数据:', data);
+            setSentInvites(data || []);
+        };
+        fetchSentInvites();
+    }, [user]);
+
+    // 发起邀请
+    const handleInvite = async () => {
+        if (!inviteId) {
+            alert('IDを入力してください');
+            return;
+        }
+        if (inviteId === partnerId || inviteId === user?.id) {
+            alert('自分自身や既に配对的用户を招待できません');
+            return;
+        }
+        // 检查对方用户是否存在
+        const { data: targetUser, error: userError } = await supabase
+            .from('User')
+            .select('uid')
+            .eq('uid', inviteId)
+            .single();
+        if (userError || !targetUser) {
+            alert('ユーザーが見つかりません');
+            return;
+        }
+        // 检查是否已有pending邀请
+        const { data: existingInvite } = await supabase
+            .from('Invite')
+            .select('*')
+            .eq('from_uid', user.id)
+            .eq('to_uid', inviteId)
+            .eq('status', 'pending')
+            .single();
+        if (existingInvite) {
+            alert('すでに招待中です');
+            return;
+        }
+        // 插入邀请
+        const { error: inviteError } = await supabase
+            .from('Invite')
+            .insert({ from_uid: user.id, to_uid: inviteId, status: 'pending' });
+        if (inviteError) {
+            alert('招待に失敗しました');
+        } else {
+            alert('招待を送りました！');
+        }
+    };
+
+    // 同意邀请
+    const handleAccept = async (invite: any) => {
+        await supabase.from('Invite').update({ status: 'accepted' }).eq('id', invite.id);
+        await supabase.from('Couple').insert({ uid1: invite.from_uid, uid2: invite.to_uid });
+        setPendingInvites(pendingInvites.filter(i => i.id !== invite.id));
+    };
+    // 拒绝邀请
+    const handleDecline = async (invite: any) => {
+        await supabase.from('Invite').update({ status: 'declined' }).eq('id', invite.id);
+        setPendingInvites(pendingInvites.filter(i => i.id !== invite.id));
+    };
+
     // 颜色选择逻辑
     const getBarColor = (gender: string | null, type: 'bg' | 'gradient') => {
         if (!gender) return type === 'gradient' ? 'bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500' : 'bg-gray-300';
@@ -135,6 +266,19 @@ const HomeDisplay = () => {
         return 'border-gray-300';
     };
 
+    // 断开配对
+    const handleBreakup = async () => {
+        if (!partnerId || !user) return;
+        const confirmed = window.confirm('本当にこのパートナーとの関係を解除しますか？');
+        if (!confirmed) return;
+        // 删除双方的配对关系（无论uid1/uid2顺序）
+        await supabase
+            .from('Couple')
+            .delete()
+            .or(`and(uid1.eq.${user.id},uid2.eq.${partnerId}),and(uid1.eq.${partnerId},uid2.eq.${user.id})`);
+        window.location.reload(); // 刷新页面，回到未配对状态
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -146,8 +290,25 @@ const HomeDisplay = () => {
     if (!hasPartner) {
         return (
             <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center px-4">
+                {/* 左上角登出按钮 */}
+                <div className="absolute top-2 left-2 z-50">
+                    <LogoutButton />
+                </div>
+                {/* 收到的邀请弹窗 */}
+                {pendingInvites.length > 0 && (
+                    <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-white shadow p-4 rounded z-50">
+                        <div className="mb-2">あなたへの招待：</div>
+                        {pendingInvites.map(invite => (
+                            <div key={invite.id} className="flex items-center gap-2 mb-2">
+                                <span>{invite.from_user?.name || '未知用户'} ({invite.from_uid}) からの招待</span>
+                                <button onClick={() => handleAccept(invite)} className="px-2 py-1 bg-blue-500 text-white rounded">同意</button>
+                                <button onClick={() => handleDecline(invite)} className="px-2 py-1 bg-gray-300 text-gray-700 rounded">拒否</button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {/* 发起邀请 */}
                 <p className="text-xl mb-6">招待しょう！</p>
-
                 <input
                     type="text"
                     value={inviteId}
@@ -155,13 +316,32 @@ const HomeDisplay = () => {
                     placeholder="IDを入力"
                     className="border border-gray-300 rounded px-4 py-2 mb-4 w-full max-w-xs"
                 />
-
                 <button
-                    onClick={() => alert(`ID ${inviteId} に招待を送りました！`)}
+                    onClick={handleInvite}
                     className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded"
                 >
                     招待
                 </button>
+                {/* 显示自己发出的邀请状态 */}
+                {sentInvites.length > 0 && (
+                    <div className="mt-6 w-full max-w-xs text-left">
+                        <div className="mb-2 text-sm text-gray-600">あなたが送った招待：</div>
+                        {sentInvites.map(invite => (
+                            <div key={invite.id} className="flex items-center gap-2 mb-1 text-xs">
+                                <span>→ {invite.to_user?.name || '未知用户'} ({invite.to_uid})</span>
+                                <span className={
+                                    invite.status === 'pending' ? 'text-yellow-500' :
+                                    invite.status === 'accepted' ? 'text-green-600' :
+                                    'text-gray-400'
+                                }>
+                                    {invite.status === 'pending' && '待機中'}
+                                    {invite.status === 'accepted' && '同意された'}
+                                    {invite.status === 'declined' && '拒否された'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         );
     }
@@ -207,6 +387,15 @@ const HomeDisplay = () => {
             <div className="fixed bottom-20 left-4">
                 <button className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg">
                     ▶️
+                </button>
+            </div>
+            {/* 右下角断开配对按钮 */}
+            <div className="fixed bottom-20 right-4">
+                <button
+                    className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg text-sm"
+                    onClick={handleBreakup}
+                >
+                    パートナー解除
                 </button>
             </div>
         </div>

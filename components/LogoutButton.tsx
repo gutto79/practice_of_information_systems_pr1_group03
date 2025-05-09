@@ -12,7 +12,7 @@ export default function LogoutButton() {
 
     // ページをリフレッシュしてミドルウェアに再評価させる
     router.refresh();
-    router.push("/login");
+    router.push("/");
   };
 
   return (
