@@ -375,6 +375,14 @@ const HomeDisplay = () => {
             {/* 相手の幸福度（居中，花哨版，数字居中，动态颜色+动态边框） */}
             <div className="flex items-center justify-center h-full">
                 <div className="w-full max-w-xs">
+                    {/* 添加图片 */}
+                    <div className="flex justify-center mb-4">
+                        <img 
+                            src="/feature/home/images/love_couple_good.png" 
+                            alt="カップル" 
+                            className="w-32 h-32 object-contain"
+                        />
+                    </div>
                     <div className="text-center text-gray-600 mb-1">相手の幸福度</div>
                     <div className={`relative w-full h-5 ${getBarColor(partnerGender, 'bg')} rounded-full shadow-inner overflow-hidden ${getBorderColor(partnerGender)}`}>
                         <div
