@@ -1,10 +1,12 @@
-"use client";  // 添加这个指令
+"use client";  
 import React, { useEffect, useState } from "react";
 import supabase from "@/lib/supabase";
 import LogoutButton from '@/components/LogoutButton';
+import { useRouter } from "next/navigation";
 
 // HomeDisplay.tsx 中展示结构（条件渲染）
 const HomeDisplay = () => {
+    const router = useRouter();
     const [hasPartner, setHasPartner] = useState(false);
     const [inviteId, setInviteId] = useState('');
     const [userHappiness, setUserHappiness] = useState<number | null>(null);
@@ -22,6 +24,19 @@ const HomeDisplay = () => {
     useEffect(() => {
         fetchUserData();
     }, []);
+
+    // 检查登录状态
+    useEffect(() => {
+        const checkAuth = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                console.log('用户未登录，跳转到首页');
+                router.push('/');
+                return;
+            }
+        };
+        checkAuth();
+    }, [router]);
 
     const fetchUserData = async () => {
         try {
