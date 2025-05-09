@@ -16,6 +16,8 @@ const HomeDisplay = () => {
     const [pendingInvites, setPendingInvites] = useState<any[]>([]);
     const [sentInvites, setSentInvites] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
+    const [userName, setUserName] = useState<string | null>(null);
+    const [partnerName, setPartnerName] = useState<string | null>(null);
 
     useEffect(() => {
         fetchUserData();
@@ -33,19 +35,20 @@ const HomeDisplay = () => {
 
             console.log('当前登录用户:', user);
 
-            // 获取用户的幸福度和性别信息
+            // 获取用户的幸福度、性别和名字信息
             const { data: userData, error: userError } = await supabase
                 .from('User')
-                .select('happiness, gender')
+                .select('happiness, gender, name')
                 .eq('uid', user.id)
                 .single();
 
             if (userError) throw userError;
 
-            console.log('用户幸福度数据:', userData);
+            console.log('用户数据:', userData);
 
             setUserHappiness(userData.happiness);
             setUserGender(userData.gender);
+            setUserName(userData.name);
 
             // 检查配对关系
             const { data: coupleData, error: coupleError } = await supabase
@@ -68,18 +71,19 @@ const HomeDisplay = () => {
 
                 console.log('配对用户ID:', partnerUid);
 
-                // 获取配对用户的幸福度和性别
+                // 获取配对用户的幸福度、性别和名字
                 const { data: partnerData, error: partnerError } = await supabase
                     .from('User')
-                    .select('happiness, gender')
+                    .select('happiness, gender, name')
                     .eq('uid', partnerUid)
                     .single();
 
                 if (partnerError) throw partnerError;
                 if (partnerData) {
-                    console.log('配对用户幸福度数据:', partnerData);
+                    console.log('配对用户数据:', partnerData);
                     setPartnerHappiness(partnerData.happiness);
                     setPartnerGender(partnerData.gender);
+                    setPartnerName(partnerData.name);
                 }
             } else {
                 console.log('用户未配对');
@@ -87,6 +91,7 @@ const HomeDisplay = () => {
                 setPartnerId(null);
                 setPartnerHappiness(null);
                 setPartnerGender(null);
+                setPartnerName(null);
             }
 
             // 控制台输出所有信息
@@ -366,6 +371,9 @@ const HomeDisplay = () => {
                             {partnerHappiness ?? 0}%
                         </span>
                     </div>
+                    <div className="text-center text-sm text-gray-600 mt-1">
+                        {partnerName || '相手'}
+                    </div>
                 </div>
             </div>
 
@@ -382,11 +390,20 @@ const HomeDisplay = () => {
                         {userHappiness ?? 0}%
                     </span>
                 </div>
+                <div className="text-sm text-gray-600 mt-1 text-right">
+                    {userName || '自分'}
+                </div>
             </div>
 
             <div className="fixed bottom-20 left-4">
-                <button className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg">
-                    ▶️
+                <button className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center w-14 h-14 transition-transform hover:scale-105">
+                    <svg 
+                        viewBox="0 0 24 24" 
+                        fill="currentColor" 
+                        className="w-8 h-8"
+                    >
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
                 </button>
             </div>
             {/* 右下角断开配对按钮 */}
