@@ -25,6 +25,11 @@ const HomeDisplay = () => {
         timestamp: string;
         happiness_change: number;
     }>>([]);
+    // 添加弹出框状态
+    const [showTimeModal, setShowTimeModal] = useState(false);
+    const [selectedTimeRange, setSelectedTimeRange] = useState<'1日' | '1週間' | '1ヶ月'>('1日');
+    // 添加断开配对确认弹窗状态
+    const [showBreakupModal, setShowBreakupModal] = useState(false);
 
     useEffect(() => {
         fetchUserData();
@@ -373,8 +378,6 @@ const HomeDisplay = () => {
     // 断开配对
     const handleBreakup = async () => {
         if (!partnerId || !user) return;
-        const confirmed = window.confirm('本当にこのパートナーとの関係を解除しますか？');
-        if (!confirmed) return;
         // 删除双方的配对关系（无论uid1/uid2顺序）
         await supabase
             .from('Couple')
@@ -545,7 +548,10 @@ const HomeDisplay = () => {
             </div>
 
             <div className="fixed bottom-20 left-4">
-                <button className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center w-14 h-14 transition-transform hover:scale-105">
+                <button 
+                    onClick={() => setShowTimeModal(true)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center w-14 h-14 transition-transform hover:scale-105"
+                >
                     <svg 
                         viewBox="0 0 24 24" 
                         fill="currentColor" 
@@ -555,15 +561,122 @@ const HomeDisplay = () => {
                     </svg>
                 </button>
             </div>
+
+            {/* 时间选择弹出框 */}
+            {showTimeModal && (
+                <div 
+                    className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50"
+                    onClick={(e) => {
+                        // 只有当点击的是遮罩层本身时才关闭
+                        if (e.target === e.currentTarget) {
+                            setShowTimeModal(false);
+                        }
+                    }}
+                >
+                    <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 w-80 shadow-xl border border-white/20">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium text-gray-900">時間範囲を選択</h3>
+                            <button 
+                                onClick={() => setShowTimeModal(false)}
+                                className="text-gray-400 hover:text-gray-500 transition-colors"
+                            >
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        {/* 时间范围选择按钮 */}
+                        <div className="flex justify-between mb-6">
+                            {(['1日', '1週間', '1ヶ月'] as const).map((range) => (
+                                <button
+                                    key={range}
+                                    onClick={() => setSelectedTimeRange(range)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all
+                                        ${selectedTimeRange === range 
+                                            ? 'bg-purple-500 text-white shadow-md hover:bg-purple-600' 
+                                            : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/80 border border-gray-200'
+                                        }`}
+                                >
+                                    {range}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* 生成按钮 */}
+                        <button
+                            onClick={() => {
+                                console.log('生成时间范围:', selectedTimeRange);
+                                setShowTimeModal(false);
+                                // TODO: 这里添加生成逻辑
+                            }}
+                            className="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-md hover:shadow-lg"
+                        >
+                            生成！
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* 右下角断开配对按钮 */}
             <div className="fixed bottom-20 right-4">
                 <button
                     className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg text-sm"
-                    onClick={handleBreakup}
+                    onClick={() => setShowBreakupModal(true)}
                 >
                     パートナー解除
                 </button>
             </div>
+
+            {/* 断开配对确认弹窗 */}
+            {showBreakupModal && (
+                <div 
+                    className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setShowBreakupModal(false);
+                        }
+                    }}
+                >
+                    <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 w-80 shadow-xl border border-white/20">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium text-gray-900">確認</h3>
+                            <button 
+                                onClick={() => setShowBreakupModal(false)}
+                                className="text-gray-400 hover:text-gray-500 transition-colors"
+                            >
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <p className="text-gray-600 mb-6">
+                            本当にこのパートナーとの関係を解除しますか？
+                            <br />
+                            この操作は取り消せません。
+                        </p>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowBreakupModal(false)}
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowBreakupModal(false);
+                                    handleBreakup();
+                                }}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-md hover:shadow-lg"
+                            >
+                                解除する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
