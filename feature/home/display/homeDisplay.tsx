@@ -20,6 +20,11 @@ const HomeDisplay = () => {
     const [user, setUser] = useState<any>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [partnerName, setPartnerName] = useState<string | null>(null);
+    const [recentActions, setRecentActions] = useState<Array<{
+        action_name: string;
+        timestamp: string;
+        happiness_change: number;
+    }>>([]);
 
     useEffect(() => {
         fetchUserData();
@@ -107,6 +112,85 @@ const HomeDisplay = () => {
                 setPartnerHappiness(null);
                 setPartnerGender(null);
                 setPartnerName(null);
+            }
+
+            // 获取用户最近的活动
+            console.log('【开始查询活动】当前用户ID:', user.id);
+            
+            const { data: recentActionsData, error: actionsError } = await supabase
+                .from('Calendar')
+                .select(`
+                    aid,
+                    timestamp,
+                    Action!inner (
+                        action_name,
+                        happiness_change,
+                        uid
+                    )
+                `)
+                .eq('Action.uid', user.id)
+                .order('timestamp', { ascending: false })
+                .limit(5);
+
+            console.log('【查询结果】', {
+                hasData: !!recentActionsData,
+                dataLength: recentActionsData?.length,
+                error: actionsError,
+                rawData: recentActionsData
+            });
+
+            if (actionsError) {
+                console.error('【查询错误】获取活动数据失败:', actionsError);
+            } else if (!recentActionsData || recentActionsData.length === 0) {
+                console.log('【查询结果】没有找到活动数据');
+            } else {
+                console.log('【数据详情】第一条记录示例:', JSON.stringify(recentActionsData[0], null, 2));
+                
+                // 添加数据检查和过滤
+                const formattedActions = recentActionsData
+                    .filter(record => {
+                        console.log('【数据检查】检查记录:', {
+                            recordExists: !!record,
+                            hasAction: !!record?.Action,
+                            isActionArray: Array.isArray(record?.Action),
+                            actionLength: Array.isArray(record?.Action) ? record.Action.length : 1,
+                            fullRecord: record
+                        });
+                        
+                        // 检查记录和Action是否存在
+                        const isValid = record && record.Action;
+                            
+                        if (!isValid) {
+                            console.log('【数据过滤】记录无效原因:', {
+                                recordMissing: !record,
+                                actionMissing: !record?.Action
+                            });
+                        }
+                        return isValid;
+                    })
+                    .map(record => {
+                        // 处理 Action 可能是对象或数组的情况
+                        const action = Array.isArray(record.Action) ? record.Action[0] : record.Action;
+                        console.log('【数据处理】处理记录:', {
+                            aid: record.aid,
+                            timestamp: record.timestamp,
+                            action: action
+                        });
+                        
+                        if (!action) {
+                            console.warn('【数据处理】跳过无效的活动记录:', record);
+                            return null;
+                        }
+                        return {
+                            action_name: action.action_name,
+                            timestamp: record.timestamp,
+                            happiness_change: action.happiness_change
+                        };
+                    })
+                    .filter(action => action !== null);
+
+                console.log('【最终数据】处理后的活动列表:', formattedActions);
+                setRecentActions(formattedActions);
             }
 
             // 控制台输出所有信息
@@ -396,6 +480,48 @@ const HomeDisplay = () => {
                     </div>
                     <div className="text-center text-sm text-gray-600 mt-1">
                         {partnerName || '相手'}
+                    </div>
+                    {/* 更新列表显示 */}
+                    <div className="mt-4 bg-white rounded-lg shadow p-4">
+                        <h3 className="text-sm font-medium text-gray-700 mb-2">最近の活動</h3>
+                        <ul className="space-y-2">
+                            {recentActions.length > 0 ? (
+                                recentActions.map((action, index) => {
+                                    // 格式化时间显示
+                                    const date = new Date(action.timestamp);
+                                    const now = new Date();
+                                    const diffTime = Math.abs(now.getTime() - date.getTime());
+                                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                                    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+                                    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+                                    let timeDisplay = '';
+                                    if (diffDays > 0) {
+                                        timeDisplay = diffDays === 1 ? '昨日' : `${diffDays}日前`;
+                                    } else if (diffHours > 0) {
+                                        timeDisplay = `${diffHours}時間前`;
+                                    } else if (diffMinutes > 0) {
+                                        timeDisplay = `${diffMinutes}分前`;
+                                    } else {
+                                        timeDisplay = 'たった今';
+                                    }
+
+                                    return (
+                                        <li key={index} className="flex justify-between items-center text-sm">
+                                            <div className="flex items-center">
+                                                <span className="text-gray-600">{action.action_name}</span>
+                                                <span className={`ml-2 text-xs ${action.happiness_change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                                    {action.happiness_change > 0 ? '+' : ''}{action.happiness_change}
+                                                </span>
+                                            </div>
+                                            <span className="text-gray-400 text-xs">{timeDisplay}</span>
+                                        </li>
+                                    );
+                                })
+                            ) : (
+                                <li className="text-sm text-gray-500 text-center">まだ活動がありません</li>
+                            )}
+                        </ul>
                     </div>
                 </div>
             </div>
