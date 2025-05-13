@@ -1,6 +1,8 @@
 import FullCalendar from "@fullcalendar/react";
 import { format } from "date-fns";
-import { createRef, useState } from "react";
+import { createRef, useState, useEffect } from "react";
+import supabase from "@/lib/supabase";
+import supabase from "@/lib/supabase";
 
 export const useCalendarFunc = () => {
   const [eventsTitle, setEventsTitle] = useState("");
