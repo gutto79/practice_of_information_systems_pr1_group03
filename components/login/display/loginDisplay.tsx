@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/hooks/useAuth";
 
 const LoginDisplay: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ const LoginDisplay: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { uid } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +26,31 @@ const LoginDisplay: React.FC = () => {
 
       if (error) throw error;
 
-      // ログイン成功
-      router.push("/home"); // ログイン後のリダイレクト先
+      if (!uid) {
+        throw new Error("ユーザー情報の取得に失敗しました");
+      }
+
+      // Userテーブルにユーザー情報があるか確認
+      const { data: userData, error: userError } = await supabase
+        .from("User")
+        .select("*")
+        .eq("uid", uid)
+        .single();
+
+      if (userError && userError.code !== "PGRST116") {
+        throw userError;
+      }
+
+      // ユーザー情報の有無に応じてリダイレクト先を変更
+      if (userData) {
+        router.push("/home");
+      } else {
+        router.push("/register");
+      }
+
       router.refresh();
     } catch (err) {
+      console.error("Login error:", err);
       setError(err instanceof Error ? err.message : "ログインに失敗しました");
     } finally {
       setLoading(false);
@@ -39,7 +62,8 @@ const LoginDisplay: React.FC = () => {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("SignUp attempt with email:", email); // デバッグログ
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -47,11 +71,18 @@ const LoginDisplay: React.FC = () => {
         },
       });
 
-      if (error) throw error;
+      console.log("SignUp response:", { data, error }); // デバッグログ
+
+      if (error) {
+        console.error("SignUp error:", error); // エラーログ
+        throw error;
+      }
 
       // 登録メール送信成功
+      console.log("SignUp success, user:", data.user); // デバッグログ
       alert("確認メールを送信しました。メールをご確認ください。");
     } catch (err) {
+      console.error("SignUp catch error:", err); // エラーログ
       setError(
         err instanceof Error ? err.message : "サインアップに失敗しました"
       );
@@ -108,7 +139,7 @@ const LoginDisplay: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full p-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+            className="w-full p-2 text-white bg-fuchsia-700 rounded-md hover:bg-fuchsia-800 disabled:bg-fuchsia-500"
           >
             {loading ? "処理中..." : "ログイン"}
           </button>
@@ -118,7 +149,7 @@ const LoginDisplay: React.FC = () => {
               type="button"
               onClick={handleSignUp}
               disabled={loading}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-fuchsia-700 hover:underline"
             >
               アカウント登録はこちら
             </button>
