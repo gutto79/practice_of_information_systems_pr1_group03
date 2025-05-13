@@ -12,8 +12,16 @@ type ActionItem = {
   uid: string;
 };
 
+type ItemType = {
+  id: number;
+  name: string;
+  point: number;
+  type: string;
+  category: string;
+};
+
 const ListContainer: React.FC = () => {
-  const [items, setItems] = useState<ActionItem[]>([]);
+  const [items, setItems] = useState<ItemType[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [actionName, setActionName] = useState("");
   const [happinessChange, setHappinessChange] = useState<number>(0);
@@ -22,7 +30,6 @@ const ListContainer: React.FC = () => {
   const [partnerUid, setPartnerUid] = useState<string | null>(null);
   const [listType, setListType] = useState<"like" | "sad">("like");
 
-  // 自分と相手のUIDを取得
   const fetchUids = async () => {
     const {
       data: { user },
@@ -32,7 +39,6 @@ const ListContainer: React.FC = () => {
     const uid = user.id;
     setMyUid(uid);
 
-    // カップルテーブルから相手のUIDを取得
     const { data: couple } = await supabase
       .from("Couple")
       .select("*")
@@ -50,21 +56,26 @@ const ListContainer: React.FC = () => {
 
     const targetUid = isShowingPartnerList ? partnerUid : myUid;
     const isLikeList = listType === "like";
+
     const { data, error } = await supabase
       .from("Action")
       .select("*")
       .eq("uid", targetUid)
-      .filter(
-        "happiness_change",
-        isLikeList ? "gte" : "lt",
-        isLikeList ? 0 : 0
-      )
+      .gt("happiness_change", isLikeList ? 0 : -Infinity)
+      .lt("happiness_change", isLikeList ? Infinity : 0)
       .order("aid", { ascending: false });
 
     if (!error && data) {
-      setItems(data);
+      const transformed: ItemType[] = data.map((item: ActionItem) => ({
+        id: item.aid,
+        name: item.action_name,
+        point: Math.abs(item.happiness_change),
+        type: item.happiness_change >= 0 ? "like" : "sad",
+        category: "default", // 必要に応じて調整
+      }));
+      setItems(transformed);
     } else {
-      console.error(error);
+      console.error("取得エラー:", error);
     }
   };
 
@@ -79,21 +90,46 @@ const ListContainer: React.FC = () => {
   const handleSubmit = async () => {
     if (!actionName || myUid === null) return;
 
-    const { error } = await supabase.from("Action").insert([
-      {
-        uid: myUid,
-        action_name: actionName,
-        happiness_change: happinessChange,
-      },
-    ]);
+    try {
+      const { data: insertedAction, error: actionError } = await supabase
+        .from("Action")
+        .insert([
+          {
+            uid: myUid,
+            action_name: actionName,
+            happiness_change: happinessChange,
+          },
+        ])
+        .select()
+        .single();
 
-    if (!error) {
+      if (actionError || !insertedAction) {
+        console.error("Action登録エラー:", actionError);
+        return;
+      }
+
+      // Calendar にも同時登録
+      const timestamp = new Date().toISOString();
+
+      const { error: calendarError } = await supabase.from("Calendar").insert([
+        {
+          uid: myUid,
+          aid: insertedAction.aid,
+          timestamp,
+        },
+      ]);
+
+      if (calendarError) {
+        console.error("Calendar登録エラー:", calendarError);
+        return;
+      }
+
       setActionName("");
       setHappinessChange(0);
       setShowForm(false);
       fetchActions();
-    } else {
-      console.error(error);
+    } catch (error) {
+      console.error("予期せぬエラー:", error);
     }
   };
 
@@ -133,9 +169,9 @@ const ListContainer: React.FC = () => {
         </button>
       </div>
 
+      {/* 登録フォーム */}
       {showForm && (
         <div className="mb-6 p-4 border rounded bg-gray-100">
-          {/* 出来事（名前）入力欄 */}
           <label className="block text-sm font-semibold mb-1 text-black">出来事</label>
           <input
             type="text"
@@ -145,7 +181,6 @@ const ListContainer: React.FC = () => {
             className="border p-2 rounded w-full mb-4 text-black"
           />
 
-          {/* ハート選択 UI */}
           <label className="block text-sm font-semibold mb-2 text-black">感情の種類</label>
           <div className="flex gap-4 mb-4">
             <button
@@ -168,7 +203,6 @@ const ListContainer: React.FC = () => {
             </button>
           </div>
 
-          {/* ポイント入力欄 */}
           <label className="block text-sm font-semibold mb-1 text-black">ポイント</label>
           <input
             type="number"
@@ -184,7 +218,6 @@ const ListContainer: React.FC = () => {
             className="border p-2 rounded w-full mb-4 text-black"
           />
 
-          {/* 登録・戻るボタン */}
           <div className="flex justify-between">
             <button
               onClick={() => setShowForm(false)}
@@ -205,7 +238,6 @@ const ListContainer: React.FC = () => {
       {/* リスト表示 */}
       <ListDisplay items={items} />
 
-      {/* プラスボタン（中央下） */}
       {!showForm && (
         <button
           onClick={() => setShowForm(true)}
