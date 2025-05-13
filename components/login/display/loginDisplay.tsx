@@ -139,7 +139,7 @@ const LoginDisplay: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full p-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+            className="w-full p-2 text-white bg-fuchsia-700 rounded-md hover:bg-fuchsia-800 disabled:bg-fuchsia-500"
           >
             {loading ? "処理中..." : "ログイン"}
           </button>
@@ -149,7 +149,7 @@ const LoginDisplay: React.FC = () => {
               type="button"
               onClick={handleSignUp}
               disabled={loading}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-fuchsia-700 hover:underline"
             >
               アカウント登録はこちら
             </button>
