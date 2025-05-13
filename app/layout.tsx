@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AnimatedBackground from "@/components/display/AnimatedBackground";
-import Footer from "@/components/display/Footer";
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -43,8 +41,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AnimatedBackground>
-          <main className="pb-24 pt-safe min-h-screen">{children}</main>
-          <Footer />
+          <main className="min-h-screen">{children}</main>
         </AnimatedBackground>
       </body>
     </html>

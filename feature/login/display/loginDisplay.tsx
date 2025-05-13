@@ -39,7 +39,8 @@ const LoginDisplay: React.FC = () => {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("SignUp attempt with email:", email); // デバッグログ
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -47,11 +48,18 @@ const LoginDisplay: React.FC = () => {
         },
       });
 
-      if (error) throw error;
+      console.log("SignUp response:", { data, error }); // デバッグログ
+
+      if (error) {
+        console.error("SignUp error:", error); // エラーログ
+        throw error;
+      }
 
       // 登録メール送信成功
+      console.log("SignUp success, user:", data.user); // デバッグログ
       alert("確認メールを送信しました。メールをご確認ください。");
     } catch (err) {
+      console.error("SignUp catch error:", err); // エラーログ
       setError(
         err instanceof Error ? err.message : "サインアップに失敗しました"
       );

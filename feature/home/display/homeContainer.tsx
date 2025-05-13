@@ -4,12 +4,12 @@ import Footer from "@/components/display/Footer";
 
 const HomeContainer: React.FC = () => {
   return (
-    <div className="flex flex-col min-h-screen w-full">
-      <div className="flex-1">
+    <>
+      <div className="flex flex-col w-full">
         <HomeDisplay />
       </div>
       <Footer />
-    </div>
+    </>
   );
 };
 
