@@ -42,3 +42,6 @@ scripts/seed.ts
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# personal notes
+Notebook.txt
