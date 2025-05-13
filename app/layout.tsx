@@ -12,22 +12,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#4f46e5",
+};
+
 export const metadata: Metadata = {
   title: "モバイルアプリ",
   description: "スマホアプリ想定のレイアウト",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "モバイルアプリ",
   },
-  themeColor: "#4f46e5",
 };
 
 export default function RootLayout({
