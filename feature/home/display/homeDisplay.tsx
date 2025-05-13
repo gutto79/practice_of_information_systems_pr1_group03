@@ -467,7 +467,7 @@ const HomeDisplay = () => {
                             className="w-32 h-32 object-contain"
                         />
                     </div>
-                    <div className="text-center text-gray-600 mb-1">相手の幸福度</div>
+                    <div className="text-center text-white mb-1">相手の幸福度</div>
                     <div className={`relative w-full h-5 ${getBarColor(partnerGender, 'bg')} rounded-full shadow-inner overflow-hidden ${getBorderColor(partnerGender)}`}>
                         <div
                             className={`h-full rounded-full ${getBarColor(partnerGender, 'gradient')} shadow-lg transition-all duration-700 relative`}
@@ -478,7 +478,7 @@ const HomeDisplay = () => {
                             {partnerHappiness ?? 0}%
                         </span>
                     </div>
-                    <div className="text-center text-sm text-gray-600 mt-1">
+                    <div className="text-center text-sm text-white mt-1">
                         {partnerName || '相手'}
                     </div>
                     {/* 更新列表显示 */}
@@ -528,7 +528,7 @@ const HomeDisplay = () => {
 
             {/* 自分の幸福度（右上角，动态颜色+数字居中，宽度60%+动态边框） */}
             <div className="absolute top-4 right-4 w-24">
-                <div className="text-sm text-gray-600 mb-1 text-right">自分の幸福度</div>
+                <div className="text-sm text-white mb-1 text-right">自分の幸福度</div>
                 <div className={`relative w-full h-4 ${getBarColor(userGender, 'bg')} rounded-full overflow-hidden ${getBorderColor(userGender)}`}>
                     <div
                         className={`h-full ${getBarColor(userGender, 'gradient')} rounded-full transition-all duration-500`}
@@ -539,7 +539,7 @@ const HomeDisplay = () => {
                         {userHappiness ?? 0}%
                     </span>
                 </div>
-                <div className="text-sm text-gray-600 mt-1 text-right">
+                <div className="text-sm text-white mt-1 text-right">
                     {userName || '自分'}
                 </div>
             </div>
