@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/hooks/useAuth";
 
 const LoginDisplay: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ const LoginDisplay: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { uid } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +26,31 @@ const LoginDisplay: React.FC = () => {
 
       if (error) throw error;
 
-      // ログイン成功
-      router.push("/home"); // ログイン後のリダイレクト先
+      if (!uid) {
+        throw new Error("ユーザー情報の取得に失敗しました");
+      }
+
+      // Userテーブルにユーザー情報があるか確認
+      const { data: userData, error: userError } = await supabase
+        .from("User")
+        .select("*")
+        .eq("uid", uid)
+        .single();
+
+      if (userError && userError.code !== "PGRST116") {
+        throw userError;
+      }
+
+      // ユーザー情報の有無に応じてリダイレクト先を変更
+      if (userData) {
+        router.push("/home");
+      } else {
+        router.push("/register");
+      }
+
       router.refresh();
     } catch (err) {
+      console.error("Login error:", err);
       setError(err instanceof Error ? err.message : "ログインに失敗しました");
     } finally {
       setLoading(false);
