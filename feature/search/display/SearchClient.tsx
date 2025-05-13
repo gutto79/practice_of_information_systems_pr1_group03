@@ -103,7 +103,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="キーワード検索"
+          placeholder="検索"
           className="flex-1 border rounded px-3 py-2"
         />
         <select
