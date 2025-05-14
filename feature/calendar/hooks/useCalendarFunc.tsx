@@ -2,6 +2,7 @@ import FullCalendar from "@fullcalendar/react";
 import { format } from "date-fns";
 import { createRef, useState, useEffect } from "react";
 import supabase from "@/lib/supabase";
+import { useAuth } from "@/components/hooks/useAuth";
 
 export const useCalendarFunc = () => {
   const [eventsTitle, setEventsTitle] = useState("");
@@ -13,18 +14,20 @@ export const useCalendarFunc = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const { uid } = useAuth();
 
   // データを取得してカレンダーイベントとして設定
   useEffect(() => {
     const fetchData = async () => {
-      const uid = 'd932d646-d372-4b28-a353-0efa9c0009fb';
+      if (!uid) return;
+      
       const { data, error } = await supabase
         .from('Action')
         .select(`
           aid,
           action_name,
           happiness_change,
-          Calendar!Calendar_aid_fkey (
+          Calendar (
             timestamp
           )
         `)
@@ -37,21 +40,23 @@ export const useCalendarFunc = () => {
 
       if (data) {
         // データをカレンダーイベントの形式に変換
-        const events = data.map(item => ({
-          id: item.aid,
-          title: item.action_name,
-          start: item.Calendar[0]?.timestamp,
-          extendedProps: {
-            happiness_change: item.happiness_change
-          }
-        })).filter(event => event.start); // timestampが存在するイベントのみを表示
+        const events = data.flatMap(item => 
+          item.Calendar.map(calendar => ({
+            id: `${item.aid}-${calendar.timestamp}`,
+            title: item.action_name,
+            start: calendar.timestamp,
+            extendedProps: {
+              happiness_change: item.happiness_change
+            }
+          }))
+        ).filter(event => event.start); // timestampが存在するイベントのみを表示
 
         setMyEvents(events);
       }
     };
 
     fetchData();
-  }, []);
+  }, [uid]); // uidを依存配列に追加
 
   const handleDateClick = (arg: { dateStr: string }) => {
     setSelectedDate(arg.dateStr);

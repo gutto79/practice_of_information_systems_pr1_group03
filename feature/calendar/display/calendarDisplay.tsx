@@ -14,7 +14,6 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { useCalendarFunc } from "../hooks/useCalendarFunc";
 import { format } from "date-fns";
 import "./calendar.css";
-
 const CalendarDisplay = () => {
   const {
     eventsTitle,
@@ -39,7 +38,7 @@ const CalendarDisplay = () => {
   } = useCalendarFunc();
 
   return (
-    <div className="flex flex-col gap-4 px-12 py-6">
+    <div className="flex flex-col gap-4 px-8 pt-2 pb-8">
       {isOpen && (selectedDate || selectedEvent) && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow-lg">
@@ -70,7 +69,7 @@ const CalendarDisplay = () => {
           </div>
         </div>
       )}
-      <div className="z-10">
+      <div className="z-10 flex">
           <FullCalendar
             viewClassNames="bg-white"
             locale="ja" // 言語を日本語に設定
