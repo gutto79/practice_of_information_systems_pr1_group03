@@ -45,6 +45,8 @@ export const useCalendarFunc = () => {
             id: `${item.aid}-${calendar.timestamp}`,
             title: item.action_name,
             start: calendar.timestamp,
+            backgroundColor: item.happiness_change < 0 ? '#e53935' : '#2196f3', // マイナスは赤、プラスは青
+            borderColor: item.happiness_change < 0 ? '#e53935' : '#2196f3', // マイナスは赤、プラスは青
             extendedProps: {
               happiness_change: item.happiness_change
             }
