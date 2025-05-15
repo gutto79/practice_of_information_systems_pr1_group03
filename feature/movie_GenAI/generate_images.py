@@ -31,6 +31,7 @@ def get_monthly_events():
     return response.data
 
 def generate_prompt(event):
+    prompt = "あなたはカップルのスライドショーの一部となる画像を生成するアシスタントです。"
     """イベントから画像生成用のプロンプトを作成"""
     happiness = "幸せな" if event['happiness_change'] > 0 else "悲しい"
     return f"{happiness} {event['action_name']}の様子を表現した画像を生成してください。高品質で写実的な画像を生成してください。"
