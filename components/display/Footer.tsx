@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
 
   return (
     <footer
-      className="fixed bottom-0 w-full bg-fuchsia-700/95 backdrop-blur-sm border-t border-fuchsia-800"
+      className="fixed bottom-0 z-50 w-full bg-fuchsia-700/95 backdrop-blur-sm border-t border-fuchsia-800"
       style={footerStyle}
     >
       <nav className="flex justify-around items-center h-16">
