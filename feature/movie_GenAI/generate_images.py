@@ -11,50 +11,66 @@ import io
 # 環境変数の読み込み
 load_dotenv()
 
-# APIキーの設定
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
 # Supabaseの設定
 supabase_url = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 supabase_key = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 supabase_client = supabase.create_client(supabase_url, supabase_key)
 
+# 画像生成のAPIエンドポイント
+url = "https://api.openai.com/v1/images/generations"
+
+# 認証用のヘッダー
+headers = {
+    "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+    "Content-Type": "application/json"
+}
+
+# 過去1ヶ月分のイベントを取得
+# 現状uid固定
 def get_monthly_events():
-    """過去1ヶ月分のイベントを取得"""
     end_date = datetime.now()
     start_date = end_date - timedelta(days=30)
     
     response = supabase_client.table('Action').select(
-        'action_name, happiness_change, Calendar(timestamp)'
-    ).gte('Calendar.timestamp', start_date.isoformat()).lte('Calendar.timestamp', end_date.isoformat()).execute()
-    
+        'action_name, happiness_change, Calendar(timestamp), User!Action_uid_fkey(gender)'
+    ).eq('uid', "53421033-d642-4f21-983c-81e86a30f0e6").gte('Calendar.timestamp', start_date.isoformat()).lte('Calendar.timestamp', end_date.isoformat()).execute()
+    print(response.data)
     return response.data
 
+# イベントから画像生成用のプロンプトを作成
 def generate_prompt(event):
     prompt = "あなたはカップルのスライドショーの一部となる画像を生成するアシスタントです。"
-    """イベントから画像生成用のプロンプトを作成"""
-    happiness = "幸せな" if event['happiness_change'] > 0 else "悲しい"
-    return f"{happiness} {event['action_name']}の様子を表現した画像を生成してください。高品質で写実的な画像を生成してください。"
+    happiness = "嬉しい" if event['happiness_change'] > 0 else "悲しい"
+    happiness_change = event['happiness_change']
+    gender = "男性" if event['User']['gender'] == 'male' else "女性"
+    prompt += f"性別：{gender}\n"
+    prompt += f"{happiness}度合い： {happiness_change}\n"
+    prompt += f"されたこと：{event['action_name']}\n"
+    prompt += "以上の出来事を表現した画像を生成してください。アニメ調でお願いします。"
+    return prompt
 
 def generate_image_with_gpt(prompt):
-    """GPT-4 Vision APIを使用して画像を生成"""
+    # GPT-4 Vision APIを使用して画像を生成
     try:
-        response = openai.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1,
-        )
-        
-        # 生成された画像のURLを取得
-        image_url = response.data[0].url
-        
-        # 画像をダウンロード
-        image_response = requests.get(image_url)
-        image = Image.open(io.BytesIO(image_response.content))
-        
-        return image
+        # ペイロードを定義する
+        payload = {
+            "model": "gpt-image-1",
+            "prompt": prompt,
+            "n": 1,  # 生成する画像の枚数
+            "size": "1024x1024",  # 画像の解像度
+        }
+
+        # リクエストを送信
+        response = requests.post(url, headers=headers, json=payload)
+
+        # レスポンスを確認
+        if response.status_code == 200:
+            data = response.json()
+            # 画像をダウンロード
+            image_b64 = data['data'][0]['b64_json']
+            image_bytes = base64.b64decode(image_b64)
+            image = Image.open(io.BytesIO(image_bytes))
+            return image
     except Exception as e:
         print(f"Error generating image: {e}")
         return None
