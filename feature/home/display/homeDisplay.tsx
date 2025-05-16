@@ -370,9 +370,66 @@ const HomeDisplay = () => {
 
     // 同意邀请
     const handleAccept = async (invite: any) => {
-        await supabase.from('Invite').update({ status: 'accepted' }).eq('id', invite.id);
-        await supabase.from('Couple').insert({ uid1: invite.from_uid, uid2: invite.to_uid });
-        setPendingInvites(pendingInvites.filter(i => i.id !== invite.id));
+        try {
+            // 检查是否已经有配对关系
+            const { data: existingCouple, error: coupleError } = await supabase
+                .from('Couple')
+                .select('*')
+                .or(`uid1.eq.${invite.from_uid},uid2.eq.${invite.from_uid},uid1.eq.${invite.to_uid},uid2.eq.${invite.to_uid}`);
+
+            if (coupleError) throw coupleError;
+
+            if (existingCouple && existingCouple.length > 0) {
+                showToastMessage('すでにペアリングされています');
+                return;
+            }
+
+            // 检查是否是自己邀请自己
+            if (invite.from_uid === invite.to_uid) {
+                showToastMessage('自分自身を招待できません');
+                return;
+            }
+
+            // 更新邀请状态
+            await supabase.from('Invite').update({ status: 'accepted' }).eq('id', invite.id);
+            
+            // 创建配对关系
+            const { error: insertError } = await supabase
+                .from('Couple')
+                .insert({ uid1: invite.from_uid, uid2: invite.to_uid });
+
+            if (insertError) throw insertError;
+            
+            // 删除邀请记录
+            await supabase.from('Invite').delete().eq('id', invite.id);
+            
+            // 获取配对用户的信息
+            const { data: partnerData, error: partnerError } = await supabase
+                .from('User')
+                .select('happiness, gender, name')
+                .eq('uid', invite.from_uid)
+                .single();
+
+            if (partnerError) throw partnerError;
+
+            // 更新所有相关状态
+            setHasPartner(true);
+            setPartnerId(invite.from_uid);
+            setPartnerHappiness(partnerData.happiness);
+            setPartnerGender(partnerData.gender);
+            setPartnerName(partnerData.name);
+            
+            // 从待处理列表中移除
+            setPendingInvites(pendingInvites.filter(i => i.id !== invite.id));
+            
+            // 清空已发送的邀请列表
+            setSentInvites([]);
+            
+            showToastMessage('ペアリング成功！');
+        } catch (error) {
+            console.error('配对失败:', error);
+            showToastMessage('ペアリングに失敗しました');
+        }
     };
     // 拒绝邀请
     const handleDecline = async (invite: any) => {
@@ -443,9 +500,9 @@ const HomeDisplay = () => {
         return (
             <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center px-4">
                 {/* 左上角登出按钮 */}
-                <div className="absolute top-2 left-2 z-50">
+                {/* <div className="absolute top-2 left-2 z-50">
                     <LogoutButton />
-                </div>
+                </div> */}
                 {/* 收到的邀请弹窗 */}
                 {pendingInvites.length > 0 && (
                     <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md shadow p-4 rounded z-50 min-w-[320px] w-full max-w-md">
@@ -539,9 +596,9 @@ const HomeDisplay = () => {
     return (
         <div className="relative p-6 h-screen">
             {/* 左上角登出按钮（白色） */}
-            <div className="absolute top-2 left-2 z-50">
+            {/* <div className="absolute top-2 left-2 z-50">
                 <LogoutButton />
-            </div>
+            </div> */}
             {/* 相手の幸福度（居中，花哨版，数字居中，动态颜色+动态边框） */}
             <div className="flex items-center justify-center h-full">
                 <div className="w-full max-w-xs">
