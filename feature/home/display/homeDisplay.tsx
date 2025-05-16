@@ -254,7 +254,7 @@ const HomeDisplay = () => {
                     )
                 `)
                 .eq('to_uid', user.id)
-                .eq('status', 'pending');
+                .eq('status', 'pending');  // 只查询待处理的邀请
             
             if (error) {
                 console.error('【查询邀请】查询收到的邀请失败:', error);
@@ -286,6 +286,7 @@ const HomeDisplay = () => {
                     )
                 `)
                 .eq('from_uid', user.id)
+                .eq('status', 'pending')  // 只查询待处理的邀请
                 .order('created_at', { ascending: false });
             
             if (error) {
