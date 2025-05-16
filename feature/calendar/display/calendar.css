@@ -1,0 +1,65 @@
+/* カレンダーの年月表示を白にする */
+.fc-toolbar-title {
+  color: white;
+}
+
+/* ボタンに隙間を開ける */
+.fc-button-group {
+  padding-bottom: 0.5rem;
+}
+
+/* ボタンの色変える */
+.fc-button,
+.fc-button-primary,
+.fc-button:focus,
+.fc-button:disabled,
+.fc-button:hover,
+.fc-button:active,
+.fc-button-primary,
+.fc-button-primary:active {
+  background-color: #e53935 !important;
+  border-color: #e53935 !important;
+  color: black !important;
+}
+.fc-button.fc-button-primary {
+    background-color: white; /* 赤系 */
+    border-color: white;
+    color: black;
+  }
+.fc-button[disabled] {
+  background-color: #9e9e9e !important;
+  border-color: black;
+  color: black !important;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.fc-button-primary:hover {
+  background-color: blue !important;
+  border-color: blue !important;
+  color: black !important;
+}
+
+/* フォーカス時 */
+.fc-button-primary:focus {
+  background-color: yellow !important;
+  border-color: yellow !important;
+  color: black !important;
+}
+
+
+/* カレンダーのボタン群を横並びにする */
+.fc-header-toolbar {
+  display: flex;
+  flex-direction: column; /* 上下に分ける */
+  padding-top: 0.5rem;
+}
+
+/* カレンダーのタイトルを一番下にする */
+.fc-toolbar-chunk:has(.fc-toolbar-title) {
+  order: 2;
+}
+
+.fc-timeGridWeek-view {
+  font-size: 50%;
+}
+

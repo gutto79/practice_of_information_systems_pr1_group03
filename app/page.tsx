@@ -1,4 +1,4 @@
-import LoginContainer from "@/feature/login/display/loginContainer";
+import LoginContainer from "@/components/login/display/loginContainer";
 
 export default function Home() {
   return <LoginContainer />;

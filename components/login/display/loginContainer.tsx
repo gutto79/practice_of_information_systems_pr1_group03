@@ -1,6 +1,5 @@
 import React from "react";
 import LoginDisplay from "./loginDisplay";
-import Footer from "@/components/display/Footer";
 
 const LoginContainer: React.FC = () => {
   return (
@@ -8,7 +7,6 @@ const LoginContainer: React.FC = () => {
       <div className="flex-1">
         <LoginDisplay />
       </div>
-      <Footer />
     </div>
   );
 };
