@@ -31,6 +31,7 @@ const ListContainer: React.FC = () => {
   const [listType, setListType] = useState<"like" | "sad">("like");
   const [loading, setLoading] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [confirmingItem, setConfirmingItem] = useState<ItemType | null>(null);
 
   const fetchUids = async () => {
     try {
@@ -140,6 +141,39 @@ const ListContainer: React.FC = () => {
     setEditingItemId(null);
     setActionName("");
     setHappinessChange(0);
+  };
+
+  const handleConfirmYes = async () => {
+    if (!confirmingItem || !myUid) return;
+  
+    try {
+      const { data: userData, error: userError } = await supabase
+        .from("User")
+        .select("happiness")
+        .eq("uid", myUid)
+        .single();
+  
+      if (userError || !userData) {
+        console.error("ユーザーの幸福度取得エラー:", userError);
+        return;
+      }
+  
+      const newHappiness = userData.happiness + confirmingItem.originalHappinessChange;
+  
+      const { error: updateError } = await supabase
+        .from("User")
+        .update({ happiness: newHappiness })
+        .eq("uid", myUid);
+  
+      if (updateError) {
+        console.error("幸福度の更新エラー:", updateError);
+        return;
+      }
+  
+      setConfirmingItem(null); // モーダルを閉じる
+    } catch (error) {
+      console.error("handleConfirmYes エラー:", error);
+    }
   };
 
   const handleSubmit = async () => {
@@ -315,50 +349,79 @@ const ListContainer: React.FC = () => {
           </div>
         ) : (
           <ul>
-            {items.map((item) => (
-              <li
-                key={item.id}
-                className="flex justify-between items-center border-b py-3"
-              >
-                <button
-                  onClick={() => startEdit(item)}
-                  className="mr-3 text-black hover:text-gray-700"
-                  aria-label={`編集: ${item.name}`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15.232 5.232l3.536 3.536M16.5 3.75a2.25 2.25 0 113.182 3.182L7.5 19.5H4.5v-3l12-12z"
-                    />
-                  </svg>
-                </button>
+  {items.map((item) => (
+    <li
+      key={item.id}
+      className="flex justify-between items-center border-b py-3"
+    >
+      {/* 編集ボタン（ペンマーク） */}
+      <button
+        onClick={() => startEdit(item)}
+        className="mr-3 text-black hover:text-gray-700"
+        aria-label={`編集: ${item.name}`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.232 5.232l3.536 3.536M16.5 3.75a2.25 2.25 0 113.182 3.182L7.5 19.5H4.5v-3l12-12z"
+          />
+        </svg>
+      </button>
 
-                <span className="flex-1 text-lg">{item.name}</span>
-
-                <span
-                  className={`font-bold text-4xl ${
-                    item.type === "like" ? "text-black" : "text-blue-600"
-                  }`}
-                >
-                  {item.originalHappinessChange < 0
-                    ? `-${item.point}`
-                    : item.point}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+      {/* イベント名を押すと確認ダイアログを開く */}
+      <div
+        className="flex-1 cursor-pointer"
+        onClick={() => setConfirmingItem(item)}
+      >
+        <span className="text-lg">{item.name}</span>
       </div>
 
+      {/* ポイント表示 */}
+      <span
+        className={`font-bold text-4xl ${
+          item.type === "like" ? "text-black" : "text-blue-600"
+        }`}
+      >
+        {item.originalHappinessChange < 0 ? `-${item.point}` : item.point}
+      </span>
+    </li>
+  ))}
+</ul>
+        )}
+      </div>
+      {confirmingItem && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full text-center">
+      <p className="text-lg font-semibold mb-4 text-black">
+        「{confirmingItem.name}」というイベントがありましたか？
+      </p>
+      <div className="flex justify-center gap-4">
+        <button
+          className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          onClick={handleConfirmYes}
+        >
+          はい
+        </button>
+        <button
+          className="px-6 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+          onClick={() => setConfirmingItem(null)}
+        >
+          いいえ
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       <Footer />
+
     </div>
   );
 };
