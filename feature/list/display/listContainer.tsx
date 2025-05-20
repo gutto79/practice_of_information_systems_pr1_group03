@@ -4,6 +4,16 @@ import React, { useState, useEffect } from "react";
 import supabase from "@/lib/supabase";
 import Footer from "@/components/display/Footer";
 
+// 1. ListContainer コンポーネントのファイルの上の方（import文の下など）に次を追加
+const getJstIsoString = (): string => {
+  const date = new Date();
+  // UTC時間に9時間を足して日本時間にする
+  const jstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  // ISO形式の文字列を作り、末尾の「Z」を取り除く
+  // 例: "2025-05-20T15:00:00.000"（日本時間）
+  return jstDate.toISOString().replace('Z', '');
+};
+
 type ActionItem = {
   aid: number;
   action_name: string;
@@ -32,6 +42,43 @@ const ListContainer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [confirmingItem, setConfirmingItem] = useState<ItemType | null>(null);
+
+  const deleteItem = async (aid: number) => {
+    if (!confirm("本当に削除しますか？")) return;
+  
+    try {
+      setLoading(true);
+  
+      // ✅【追加】まずCalendarテーブルから削除
+      const { error: calendarError } = await supabase
+        .from("Calendar")
+        .delete()
+        .eq("aid", aid);
+  
+      if (calendarError) {
+        console.error("カレンダーの削除に失敗:", calendarError.message);
+        return; // Calendarの削除に失敗したら処理を中断
+      }
+  
+      // ✅【元からある処理】Actionテーブルから削除
+      const { error } = await supabase
+        .from("Action")
+        .delete()
+        .eq("aid", aid);
+  
+      if (error) {
+        console.error("Actionの削除に失敗:", error.message);
+        return;
+      }
+  
+      // ✅【元からある処理】ローカル状態からも削除（画面即更新）
+      setItems((prevItems) => prevItems.filter((item) => item.id !== aid));
+    } catch (err) {
+      console.error("予期せぬエラー:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUids = async () => {
     try {
@@ -215,7 +262,7 @@ const ListContainer: React.FC = () => {
           return;
         }
 
-        const timestamp = new Date().toISOString();
+        const timestamp = getJstIsoString();
 
         const { error: calendarError } = await supabase.from("Calendar").insert([
           {
@@ -354,6 +401,7 @@ const ListContainer: React.FC = () => {
       key={item.id}
       className="flex justify-between items-center border-b py-3"
     >
+
       {/* 編集ボタン（ペンマーク） */}
 {!isShowingPartnerList && (
   <button
@@ -388,12 +436,39 @@ const ListContainer: React.FC = () => {
 
       {/* ポイント表示 */}
       <span
-        className={`font-bold text-4xl ${
-          item.type === "like" ? "text-black" : "text-blue-600"
-        }`}
-      >
-        {item.originalHappinessChange < 0 ? `-${item.point}` : item.point}
-      </span>
+  className={`font-bold text-4xl ${
+    item.type === "like" ? "text-black" : "text-blue-600"
+  }`}
+>
+  {item.originalHappinessChange < 0
+    ? `-${item.point}`
+    : item.point}
+</span>
+
+{!isShowingPartnerList && (
+  <button
+    onClick={() => deleteItem(item.id)}
+    className="ml-3 text-red-500 hover:text-red-700"
+    title="削除"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 18L18 6M6 6l12 12"
+      />
+    </svg>
+  </button>
+)}
+
+
     </li>
   ))}
 </ul>
