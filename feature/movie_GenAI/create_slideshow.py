@@ -13,8 +13,8 @@ def create_slideshow():
     
     # 各クリップの基本時間を設定
     base_duration = min(5, 30.0 / len(image_files))
-    # クロスフェードの時間を設定（基本時間の20%）
-    crossfade_duration = base_duration * 0.2
+    # クロスフェードの時間を設定（基本時間の40%に増加）
+    crossfade_duration = base_duration * 0.4
     
     clips = []
 
@@ -25,15 +25,21 @@ def create_slideshow():
         image_clip = (
             ImageClip(image_path)
             .set_duration(base_duration + crossfade_duration)  # クロスフェード時間を考慮
-            .resize(height=1080)  # 高さを統一（幅は自動調整）
-            .fx(vfx.resize, lambda t: 1 + 0.01 * t)  # 時間とともに拡大
+            .resize(height=1080)                               # 高さを統一（幅は自動調整）
+            .fx(vfx.resize, lambda t: 1 + 0.005 * t)           # ズーム効果を緩やかに
         )
 
         # アクション名を表示
-        action_name = image_file.split('_')[1:-1]  # ファイル名からアクション名を抽出
-        action_text = ' '.join(action_name)  # アンダースコアをスペースに変換
+        action_name = image_file.split('_')[1:-1]              # ファイル名からアクション名を抽出
+        action_text = ' '.join(action_name)                    # アンダースコアをスペースに変換
         txt_clip = (
-            TextClip(action_text, fontsize=50, color='white', stroke_color='black', stroke_width=2)
+            TextClip(
+                action_text,
+                fontsize=50,
+                color='white',
+                stroke_color='black',
+                stroke_width=2
+            )
             .set_position(("center", "top"))
             .set_duration(base_duration + crossfade_duration)
         )
