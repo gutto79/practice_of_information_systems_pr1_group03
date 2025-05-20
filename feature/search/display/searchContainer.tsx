@@ -2,7 +2,7 @@
 import React from "react";
 import SearchDisplay from "./SearchPage";
 import Footer from "@/components/display/Footer";
-
+import Header from "@/components/display/header";
 interface Props {
   searchParams?: { [key: string]: string | string[] | undefined };
 }
@@ -12,12 +12,13 @@ const SearchContainer: React.FC<Props> = ({ searchParams = {} }) => {
   const formattedSearchParams = {
     searchParams: {
       q: searchParams.q as string | undefined,
-      type: searchParams.type as 'positive' | 'negative' | undefined
-    }
+      type: searchParams.type as "positive" | "negative" | undefined,
+    },
   };
 
   return (
     <div className="flex flex-col min-h-screen w-full">
+      <Header />
       <div className="flex-1">
         {/* URL の ?q=…&type=… をそのまま受け渡し */}
         <SearchDisplay {...formattedSearchParams} />

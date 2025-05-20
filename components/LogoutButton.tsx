@@ -12,13 +12,13 @@ export default function LogoutButton() {
 
     // ページをリフレッシュしてミドルウェアに再評価させる
     router.refresh();
-    router.push("/login");
+    router.push("/");
   };
 
   return (
     <button
       onClick={handleLogout}
-      className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700"
+      className="px-4 py-2 bg-white text-gray-700 rounded-md hover:bg-gray-100 border border-gray-300 shadow"
     >
       ログアウト
     </button>
