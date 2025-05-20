@@ -25,6 +25,14 @@ const HomeDisplay = () => {
         timestamp: string;
         happiness_change: number;
     }>>([]);
+    // 添加弹出框状态
+    const [showTimeModal, setShowTimeModal] = useState(false);
+    const [selectedTimeRange, setSelectedTimeRange] = useState<'1日' | '1週間' | '1ヶ月'>('1日');
+    // 添加断开配对确认弹窗状态
+    const [showBreakupModal, setShowBreakupModal] = useState(false);
+    // 修改提示状态，添加消息内容
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
     useEffect(() => {
         fetchUserData();
@@ -246,7 +254,7 @@ const HomeDisplay = () => {
                     )
                 `)
                 .eq('to_uid', user.id)
-                .eq('status', 'pending');
+                .eq('status', 'pending');  // 只查询待处理的邀请
             
             if (error) {
                 console.error('【查询邀请】查询收到的邀请失败:', error);
@@ -278,6 +286,7 @@ const HomeDisplay = () => {
                     )
                 `)
                 .eq('from_uid', user.id)
+                .eq('status', 'pending')  // 只查询待处理的邀请
                 .order('created_at', { ascending: false });
             
             if (error) {
@@ -291,24 +300,31 @@ const HomeDisplay = () => {
         fetchSentInvites();
     }, [user]);
 
-    // 发起邀请
+    // 添加显示提示的函数
+    const showToastMessage = (message: string) => {
+        setToastMessage(message);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+    };
+
+    // 修改发起邀请函数
     const handleInvite = async () => {
         if (!inviteId) {
-            alert('IDを入力してください');
+            showToastMessage('IDを入力してください');
             return;
         }
         if (inviteId === partnerId || inviteId === user?.id) {
-            alert('自分自身や既に配对的用户を招待できません');
+            showToastMessage('自分自身や既に配对的用户を招待できません');
             return;
         }
         // 检查对方用户是否存在
         const { data: targetUser, error: userError } = await supabase
             .from('User')
-            .select('uid')
+            .select('uid, name')
             .eq('uid', inviteId)
             .single();
         if (userError || !targetUser) {
-            alert('ユーザーが見つかりません');
+            showToastMessage('ユーザーが見つかりません');
             return;
         }
         // 检查是否已有pending邀请
@@ -320,30 +336,121 @@ const HomeDisplay = () => {
             .eq('status', 'pending')
             .single();
         if (existingInvite) {
-            alert('すでに招待中です');
+            showToastMessage('すでに招待中です');
             return;
         }
         // 插入邀请
-        const { error: inviteError } = await supabase
+        const { data: newInvite, error: inviteError } = await supabase
             .from('Invite')
-            .insert({ from_uid: user.id, to_uid: inviteId, status: 'pending' });
+            .insert({ from_uid: user.id, to_uid: inviteId, status: 'pending' })
+            .select()
+            .single();
+
         if (inviteError) {
-            alert('招待に失敗しました');
+            showToastMessage('招待に失敗しました');
         } else {
-            alert('招待を送りました！');
+            showToastMessage('招待を送りました！');
+            // 立即更新已发送列表
+            setSentInvites(prev => [{
+                ...newInvite,
+                to_user: targetUser
+            }, ...prev]);
+            // 清空输入框
+            setInviteId('');
+        }
+    };
+
+    // 修改复制ID的处理函数
+    const handleCopyId = () => {
+        if (user?.id) {
+            navigator.clipboard.writeText(user.id);
+            showToastMessage('IDをコピーしました！');
         }
     };
 
     // 同意邀请
     const handleAccept = async (invite: any) => {
-        await supabase.from('Invite').update({ status: 'accepted' }).eq('id', invite.id);
-        await supabase.from('Couple').insert({ uid1: invite.from_uid, uid2: invite.to_uid });
-        setPendingInvites(pendingInvites.filter(i => i.id !== invite.id));
+        try {
+            // 检查是否已经有配对关系
+            const { data: existingCouple, error: coupleError } = await supabase
+                .from('Couple')
+                .select('*')
+                .or(`uid1.eq.${invite.from_uid},uid2.eq.${invite.from_uid},uid1.eq.${invite.to_uid},uid2.eq.${invite.to_uid}`);
+
+            if (coupleError) throw coupleError;
+
+            if (existingCouple && existingCouple.length > 0) {
+                showToastMessage('すでにペアリングされています');
+                return;
+            }
+
+            // 检查是否是自己邀请自己
+            if (invite.from_uid === invite.to_uid) {
+                showToastMessage('自分自身を招待できません');
+                return;
+            }
+
+            // 更新邀请状态
+            await supabase.from('Invite').update({ status: 'accepted' }).eq('id', invite.id);
+            
+            // 创建配对关系
+            const { error: insertError } = await supabase
+                .from('Couple')
+                .insert({ uid1: invite.from_uid, uid2: invite.to_uid });
+
+            if (insertError) throw insertError;
+            
+            // 删除邀请记录
+            await supabase.from('Invite').delete().eq('id', invite.id);
+            
+            // 获取配对用户的信息
+            const { data: partnerData, error: partnerError } = await supabase
+                .from('User')
+                .select('happiness, gender, name')
+                .eq('uid', invite.from_uid)
+                .single();
+
+            if (partnerError) throw partnerError;
+
+            // 更新所有相关状态
+            setHasPartner(true);
+            setPartnerId(invite.from_uid);
+            setPartnerHappiness(partnerData.happiness);
+            setPartnerGender(partnerData.gender);
+            setPartnerName(partnerData.name);
+            
+            // 从待处理列表中移除
+            setPendingInvites(pendingInvites.filter(i => i.id !== invite.id));
+            
+            // 清空已发送的邀请列表
+            setSentInvites([]);
+            
+            showToastMessage('ペアリング成功！');
+        } catch (error) {
+            console.error('配对失败:', error);
+            showToastMessage('ペアリングに失敗しました');
+        }
     };
     // 拒绝邀请
     const handleDecline = async (invite: any) => {
         await supabase.from('Invite').update({ status: 'declined' }).eq('id', invite.id);
         setPendingInvites(pendingInvites.filter(i => i.id !== invite.id));
+    };
+
+    // 添加删除邀请的函数
+    const handleDeleteInvite = async (inviteId: number) => {
+        const { error } = await supabase
+            .from('Invite')
+            .delete()
+            .eq('id', inviteId);
+        
+        if (error) {
+            showToastMessage('削除に失敗しました');
+            return;
+        }
+        
+        // 从已发送列表中移除，不显示提示
+        setSentInvites(sentInvites.filter(i => i.id !== inviteId));
     };
 
     // 颜色选择逻辑
@@ -373,8 +480,6 @@ const HomeDisplay = () => {
     // 断开配对
     const handleBreakup = async () => {
         if (!partnerId || !user) return;
-        const confirmed = window.confirm('本当にこのパートナーとの関係を解除しますか？');
-        if (!confirmed) return;
         // 删除双方的配对关系（无论uid1/uid2顺序）
         await supabase
             .from('Couple')
@@ -395,30 +500,32 @@ const HomeDisplay = () => {
         return (
             <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center px-4">
                 {/* 左上角登出按钮 */}
-                <div className="absolute top-2 left-2 z-50">
+                {/* <div className="absolute top-2 left-2 z-50">
                     <LogoutButton />
-                </div>
+                </div> */}
                 {/* 收到的邀请弹窗 */}
                 {pendingInvites.length > 0 && (
-                    <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-white shadow p-4 rounded z-50">
-                        <div className="mb-2">あなたへの招待：</div>
+                    <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md shadow p-4 rounded z-50 min-w-[320px] w-full max-w-md">
+                        <div className="mb-2 text-gray-800">あなたへの招待：</div>
                         {pendingInvites.map(invite => (
                             <div key={invite.id} className="flex items-center gap-2 mb-2">
-                                <span>{invite.from_user?.name || '未知用户'} ({invite.from_uid}) からの招待</span>
-                                <button onClick={() => handleAccept(invite)} className="px-2 py-1 bg-blue-500 text-white rounded">同意</button>
-                                <button onClick={() => handleDecline(invite)} className="px-2 py-1 bg-gray-300 text-gray-700 rounded">拒否</button>
+                                <span className="text-gray-800 flex-1">{invite.from_user?.name || '未知用户'} からの招待</span>
+                                <div className="flex gap-2">
+                                    <button onClick={() => handleAccept(invite)} className="px-3 py-1 bg-blue-500 text-white rounded whitespace-nowrap">同意</button>
+                                    <button onClick={() => handleDecline(invite)} className="px-3 py-1 bg-gray-300 text-gray-700 rounded whitespace-nowrap">拒否</button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
                 {/* 发起邀请 */}
-                <p className="text-xl mb-6">招待しょう！</p>
+                <p className="text-xl mb-6 text-white">招待しょう！</p>
                 <input
                     type="text"
                     value={inviteId}
                     onChange={(e) => setInviteId(e.target.value)}
                     placeholder="IDを入力"
-                    className="border border-gray-300 rounded px-4 py-2 mb-4 w-full max-w-xs"
+                    className="border border-gray-300 rounded px-4 py-2 mb-4 w-full max-w-xs bg-white/90 backdrop-blur-sm text-gray-700 placeholder-gray-400"
                 />
                 <button
                     onClick={handleInvite}
@@ -426,22 +533,58 @@ const HomeDisplay = () => {
                 >
                     招待
                 </button>
+                {/* 添加显示用户ID的部分 */}
+                <div className="mt-4 text-white">
+                    <p className="text-sm mb-1">あなたのID：</p>
+                    <div className="flex items-center gap-2">
+                        <div className="bg-white/20 backdrop-blur-sm rounded px-3 py-2 text-center flex-1">
+                            <span className="font-mono">{user?.id || '読み込み中...'}</span>
+                        </div>
+                        <button
+                            onClick={handleCopyId}
+                            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded p-2 transition-colors"
+                            title="IDをコピー"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                {/* 统一的提示组件 */}
+                {showToast && (
+                    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+                        <div className="bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm animate-fade-in-out">
+                            {toastMessage}
+                        </div>
+                    </div>
+                )}
                 {/* 显示自己发出的邀请状态 */}
                 {sentInvites.length > 0 && (
                     <div className="mt-6 w-full max-w-xs text-left">
-                        <div className="mb-2 text-sm text-gray-600">あなたが送った招待：</div>
+                        <div className="mb-2 text-sm text-white">あなたが送った招待：</div>
                         {sentInvites.map(invite => (
-                            <div key={invite.id} className="flex items-center gap-2 mb-1 text-xs">
-                                <span>→ {invite.to_user?.name || '未知用户'} ({invite.to_uid})</span>
-                                <span className={
-                                    invite.status === 'pending' ? 'text-yellow-500' :
-                                    invite.status === 'accepted' ? 'text-green-600' :
-                                    'text-gray-400'
-                                }>
-                                    {invite.status === 'pending' && '待機中'}
-                                    {invite.status === 'accepted' && '同意された'}
-                                    {invite.status === 'declined' && '拒否された'}
-                                </span>
+                            <div key={invite.id} className="flex items-center gap-2 mb-2 text-xs">
+                                <div className="flex-1">
+                                    <span className="text-white">→ {invite.to_user?.name || '未知用户'}</span>
+                                    <span className={
+                                        invite.status === 'pending' ? 'text-yellow-300' :
+                                        invite.status === 'accepted' ? 'text-green-300' :
+                                        'text-gray-300'
+                                    }>
+                                        {invite.status === 'pending' && ' 待機中'}
+                                        {invite.status === 'accepted' && ' 同意された'}
+                                        {invite.status === 'declined' && ' 拒否された'}
+                                    </span>
+                                </div>
+                                {invite.status === 'declined' && (
+                                    <button
+                                        onClick={() => handleDeleteInvite(invite.id)}
+                                        className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors"
+                                    >
+                                        了解
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -453,9 +596,9 @@ const HomeDisplay = () => {
     return (
         <div className="relative p-6 h-screen">
             {/* 左上角登出按钮（白色） */}
-            <div className="absolute top-2 left-2 z-50">
+            {/* <div className="absolute top-2 left-2 z-50">
                 <LogoutButton />
-            </div>
+            </div> */}
             {/* 相手の幸福度（居中，花哨版，数字居中，动态颜色+动态边框） */}
             <div className="flex items-center justify-center h-full">
                 <div className="w-full max-w-xs">
@@ -467,7 +610,7 @@ const HomeDisplay = () => {
                             className="w-32 h-32 object-contain"
                         />
                     </div>
-                    <div className="text-center text-gray-600 mb-1">相手の幸福度</div>
+                    <div className="text-center text-white mb-1">相手の幸福度</div>
                     <div className={`relative w-full h-5 ${getBarColor(partnerGender, 'bg')} rounded-full shadow-inner overflow-hidden ${getBorderColor(partnerGender)}`}>
                         <div
                             className={`h-full rounded-full ${getBarColor(partnerGender, 'gradient')} shadow-lg transition-all duration-700 relative`}
@@ -478,7 +621,7 @@ const HomeDisplay = () => {
                             {partnerHappiness ?? 0}%
                         </span>
                     </div>
-                    <div className="text-center text-sm text-gray-600 mt-1">
+                    <div className="text-center text-sm text-white mt-1">
                         {partnerName || '相手'}
                     </div>
                     {/* 更新列表显示 */}
@@ -528,7 +671,7 @@ const HomeDisplay = () => {
 
             {/* 自分の幸福度（右上角，动态颜色+数字居中，宽度60%+动态边框） */}
             <div className="absolute top-4 right-4 w-24">
-                <div className="text-sm text-gray-600 mb-1 text-right">自分の幸福度</div>
+                <div className="text-sm text-white mb-1 text-right">自分の幸福度</div>
                 <div className={`relative w-full h-4 ${getBarColor(userGender, 'bg')} rounded-full overflow-hidden ${getBorderColor(userGender)}`}>
                     <div
                         className={`h-full ${getBarColor(userGender, 'gradient')} rounded-full transition-all duration-500`}
@@ -539,13 +682,16 @@ const HomeDisplay = () => {
                         {userHappiness ?? 0}%
                     </span>
                 </div>
-                <div className="text-sm text-gray-600 mt-1 text-right">
+                <div className="text-sm text-white mt-1 text-right">
                     {userName || '自分'}
                 </div>
             </div>
 
             <div className="fixed bottom-20 left-4">
-                <button className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center w-14 h-14 transition-transform hover:scale-105">
+                <button 
+                    onClick={() => setShowTimeModal(true)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center w-14 h-14 transition-transform hover:scale-105"
+                >
                     <svg 
                         viewBox="0 0 24 24" 
                         fill="currentColor" 
@@ -555,17 +701,145 @@ const HomeDisplay = () => {
                     </svg>
                 </button>
             </div>
+
+            {/* 时间选择弹出框 */}
+            {showTimeModal && (
+                <div 
+                    className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50"
+                    onClick={(e) => {
+                        // 只有当点击的是遮罩层本身时才关闭
+                        if (e.target === e.currentTarget) {
+                            setShowTimeModal(false);
+                        }
+                    }}
+                >
+                    <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 w-80 shadow-xl border border-white/20">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium text-gray-900">時間範囲を選択</h3>
+                            <button 
+                                onClick={() => setShowTimeModal(false)}
+                                className="text-gray-400 hover:text-gray-500 transition-colors"
+                            >
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        {/* 时间范围选择按钮 */}
+                        <div className="flex justify-between mb-6">
+                            {(['1日', '1週間', '1ヶ月'] as const).map((range) => (
+                                <button
+                                    key={range}
+                                    onClick={() => setSelectedTimeRange(range)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all
+                                        ${selectedTimeRange === range 
+                                            ? 'bg-purple-500 text-white shadow-md hover:bg-purple-600' 
+                                            : 'bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white/80 border border-gray-200'
+                                        }`}
+                                >
+                                    {range}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* 生成按钮 */}
+                        <button
+                            onClick={() => {
+                                console.log('生成时间范围:', selectedTimeRange);
+                                setShowTimeModal(false);
+                                // TODO: 这里添加生成逻辑
+                            }}
+                            className="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-md hover:shadow-lg"
+                        >
+                            生成！
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* 右下角断开配对按钮 */}
             <div className="fixed bottom-20 right-4">
                 <button
                     className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg text-sm"
-                    onClick={handleBreakup}
+                    onClick={() => setShowBreakupModal(true)}
                 >
                     パートナー解除
                 </button>
             </div>
+
+            {/* 断开配对确认弹窗 */}
+            {showBreakupModal && (
+                <div 
+                    className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setShowBreakupModal(false);
+                        }
+                    }}
+                >
+                    <div className="bg-white/90 backdrop-blur-md rounded-lg p-6 w-80 shadow-xl border border-white/20">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium text-gray-900">確認</h3>
+                            <button 
+                                onClick={() => setShowBreakupModal(false)}
+                                className="text-gray-400 hover:text-gray-500 transition-colors"
+                            >
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <p className="text-gray-600 mb-6">
+                            本当にこのパートナーとの関係を解除しますか？
+                            <br />
+                            この操作は取り消せません。
+                        </p>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowBreakupModal(false)}
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowBreakupModal(false);
+                                    handleBreakup();
+                                }}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-md hover:shadow-lg"
+                            >
+                                解除する
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
+
+// 修改动画样式
+const styles = `
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: scale(0.9); }
+    15% { opacity: 1; transform: scale(1); }
+    85% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.9); }
+}
+
+.animate-fade-in-out {
+    animation: fadeInOut 2s ease-in-out forwards;
+}
+`;
+
+// 添加样式到页面
+if (typeof document !== 'undefined') {
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
+}
 
 export default HomeDisplay;
