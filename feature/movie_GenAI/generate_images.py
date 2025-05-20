@@ -75,8 +75,8 @@ def generate_image_with_gpt(prompt):
         print(f"Error generating image: {e}")
         return None
 
+# イベントから画像を生成
 def generate_images(uid, days):
-    """イベントから画像を生成"""
     print(f"Generating images for user {uid} with days={days}")
     
     # 出力ディレクトリの作成
