@@ -150,7 +150,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
 
   /* カード描画 */
   const renderCard = (i: Item) => (
-    <li key={i.id} className="border rounded p-4 flex justify-between">
+    <li key={i.id} className="border rounded p-4 flex justify-between bg-white">
       <div>
         <p className="font-medium">{i.label}</p>
         <p className="text-sm text-gray-500">
@@ -178,17 +178,17 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   return (
     <section className="space-y-6 max-w-4xl mx-auto p-6">
       {/* ── 検索バー ─────────────────── */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 bg-white p-4 rounded border">
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="キーワード検索"
-          className="flex-1 border rounded px-3 py-2 min-w-[200px]"
+          className="flex-1 border rounded px-3 py-2 min-w-[200px] bg-white"
         />
         <select
           value={type}
           onChange={e => setType(e.target.value as FilterType)}
-          className="border rounded px-2 py-2"
+          className="border rounded px-2 py-2 bg-white"
         >
           <option value="">全部</option>
           <option value="positive">うれしい</option>
@@ -205,7 +205,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
       {/* ── 見出し行（Happy / Bad）──────── */}
       <div className="grid md:grid-cols-2 gap-6 text-lg mb-2">
         {/* Happy */}
-        <div className="inline-flex items-center gap-2 font-bold">
+        <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border">
           <span className="text-red-700">❤️</span>
           Happy
           <span className="text-sm font-normal text-gray-600 ml-1">
@@ -214,7 +214,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         </div>
 
         {/* Bad */}
-        <div className="inline-flex items-center gap-2 font-bold">
+        <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border">
           <span className="text-blue-700">💙</span>
           Bad
           <span className="text-sm font-normal text-gray-600 ml-1">
