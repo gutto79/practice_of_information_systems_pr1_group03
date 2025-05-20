@@ -176,34 +176,36 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
    *  JSX
    *─────────────────────*/
   return (
-    <section className="space-y-6 max-w-4xl mx-auto p-6">
+    <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6">
       {/* ── 検索バー ─────────────────── */}
-      <div className="flex flex-wrap gap-2 bg-white p-4 rounded border">
+      <div className="flex flex-col sm:flex-row gap-2 bg-white p-4 rounded border">
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="キーワード検索"
-          className="flex-1 border rounded px-3 py-2 min-w-[200px] bg-white"
+          className="w-full border rounded px-3 py-2 bg-white"
         />
-        <select
-          value={type}
-          onChange={e => setType(e.target.value as FilterType)}
-          className="border rounded px-2 py-2 bg-white"
-        >
-          <option value="">全部</option>
-          <option value="positive">うれしい</option>
-          <option value="negative">いやな</option>
-        </select>
-        <button
-          onClick={runSearch}
-          className="bg-fuchsia-700 hover:bg-fuchsia-800 text-white px-4 py-2 rounded"
-        >
-          検索
-        </button>
+        <div className="flex gap-2">
+          <select
+            value={type}
+            onChange={e => setType(e.target.value as FilterType)}
+            className="flex-1 border rounded px-2 py-2 bg-white"
+          >
+            <option value="">全部</option>
+            <option value="positive">うれしい</option>
+            <option value="negative">いやな</option>
+          </select>
+          <button
+            onClick={runSearch}
+            className="bg-fuchsia-700 hover:bg-fuchsia-800 text-white px-4 py-2 rounded whitespace-nowrap"
+          >
+            検索
+          </button>
+        </div>
       </div>
 
       {/* ── 見出し行（Happy / Bad）──────── */}
-      <div className="grid md:grid-cols-2 gap-6 text-lg mb-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-lg mb-2">
         {/* Happy */}
         <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border">
           <span className="text-red-700">❤️</span>
@@ -229,7 +231,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
       ) : items.happy.length + items.bad.length === 0 ? (
         <p className="text-gray-500 text-center pt-8">該当する項目がありません</p>
       ) : (
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <ul className="space-y-4">
             {items.happy.map(renderCard)}
           </ul>
