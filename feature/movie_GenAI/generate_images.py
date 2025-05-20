@@ -75,8 +75,8 @@ def generate_image_with_gpt(prompt):
         print(f"Error generating image: {e}")
         return None
 
+# イベントから画像を生成
 def generate_images():
-    """イベントから画像を生成"""
     # 出力ディレクトリの作成
     output_dir = "generated_images"
     os.makedirs(output_dir, exist_ok=True)
