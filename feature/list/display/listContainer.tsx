@@ -138,7 +138,7 @@ const ListContainer: React.FC = () => {
 
   const cancelForm = () => {
     setShowForm(false);
-    setEditingItemId(null);
+    setEditingItemId(null); // ← 念のためここで null に戻すの重要
     setActionName("");
     setHappinessChange(0);
   };
@@ -355,26 +355,28 @@ const ListContainer: React.FC = () => {
       className="flex justify-between items-center border-b py-3"
     >
       {/* 編集ボタン（ペンマーク） */}
-      <button
-        onClick={() => startEdit(item)}
-        className="mr-3 text-black hover:text-gray-700"
-        aria-label={`編集: ${item.name}`}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15.232 5.232l3.536 3.536M16.5 3.75a2.25 2.25 0 113.182 3.182L7.5 19.5H4.5v-3l12-12z"
-          />
-        </svg>
-      </button>
+{!isShowingPartnerList && (
+  <button
+    onClick={() => startEdit(item)}
+    className="mr-3 text-black hover:text-gray-700"
+    aria-label={`編集: ${item.name}`}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.232 5.232l3.536 3.536M16.5 3.75a2.25 2.25 0 113.182 3.182L7.5 19.5H4.5v-3l12-12z"
+      />
+    </svg>
+  </button>
+)}
 
       {/* イベント名を押すと確認ダイアログを開く */}
       <div
@@ -419,6 +421,21 @@ const ListContainer: React.FC = () => {
       </div>
     </div>
   </div>
+)}
+
+{!isShowingPartnerList && !showForm && (
+  <button
+    onClick={() => {
+      setEditingItemId(null);
+      setActionName("");
+      setHappinessChange(1);
+      setShowForm(true);
+    }}
+    className="fixed bottom-20 right-6 w-16 h-16 rounded-full bg-green-500 text-white text-4xl flex items-center justify-center shadow-lg hover:bg-green-600 z-50"
+    aria-label="新しい出来事を追加"
+  >
+    ＋
+  </button>
 )}
       <Footer />
 
