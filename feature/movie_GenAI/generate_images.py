@@ -27,13 +27,13 @@ headers = {
 
 # 過去1ヶ月分のイベントを取得
 # 現状uid固定
-def get_monthly_events():
+def get_monthly_events(uid,days):
     end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)
+    start_date = end_date - timedelta(days)
     
     response = supabase_client.table('Action').select(
         'action_name, happiness_change, Calendar(timestamp), User!Action_uid_fkey(gender)'
-    ).eq('uid', "53421033-d642-4f21-983c-81e86a30f0e6").gte('Calendar.timestamp', start_date.isoformat()).lte('Calendar.timestamp', end_date.isoformat()).execute()
+    ).eq('uid', uid).gte('Calendar.timestamp', start_date.isoformat()).lte('Calendar.timestamp', end_date.isoformat()).execute()
     print(response.data)
     return response.data
 
@@ -76,13 +76,15 @@ def generate_image_with_gpt(prompt):
         return None
 
 # イベントから画像を生成
-def generate_images():
+def generate_images(uid, days):
+    print(f"Generating images for user {uid} with days={days}")
+    
     # 出力ディレクトリの作成
-    output_dir = "generated_images"
+    output_dir = "feature/movie_GenAI/generated_images"
     os.makedirs(output_dir, exist_ok=True)
     
     # イベントの取得
-    events = get_monthly_events()
+    events = get_monthly_events(uid, days)
     
     # 各イベントに対して画像を生成
     for i, event in enumerate(events):
@@ -101,4 +103,11 @@ def generate_images():
             print(f"Failed to generate image for event: {event['action_name']}")
 
 if __name__ == "__main__":
-    generate_images() 
+    # テスト用
+    import sys
+    if len(sys.argv) > 2:
+        uid = sys.argv[1]
+        days = int(sys.argv[2])
+        generate_images(uid, days)
+    else:
+        print("Usage: python generate_images.py <uid> <days>")

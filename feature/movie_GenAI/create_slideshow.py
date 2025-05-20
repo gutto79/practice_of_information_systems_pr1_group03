@@ -4,7 +4,7 @@ from moviepy.editor import (
 )
 
 def create_slideshow():
-    image_dir = "generated_images"
+    image_dir = "feature/movie_GenAI/generated_images"
     image_files = sorted([f for f in os.listdir(image_dir) if f.endswith('.png')])
     
     if not image_files:
@@ -38,7 +38,7 @@ def create_slideshow():
         clips.append(video_clip)
 
     final_clip = concatenate_videoclips(clips, method="compose")
-    output_path = "monthly_review.mp4"
+    output_path = "feature/movie_GenAI/monthly_review.mp4"
     final_clip.write_videofile(output_path, fps=24)
     print(f"Slideshow video created: {output_path}")
 
