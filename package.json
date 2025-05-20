@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "api": "cd feature/movie_GenAI && PORT=8000 python3 api.py",
+    "dev:all": "concurrently \"npm run dev\" \"npm run api\"",
+    "setup:api": "cd feature/movie_GenAI && pip install -r requirements.txt"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.17",
@@ -40,6 +43,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.1.2",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
     "tailwindcss": "^4",

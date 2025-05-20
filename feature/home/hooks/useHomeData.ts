@@ -28,6 +28,7 @@ export const useHomeData = () => {
     showBreakupModal: false,
     showToast: false,
     toastMessage: "",
+    videoUrl: null,
   });
 
   const router = useRouter();
@@ -267,11 +268,13 @@ export const useHomeData = () => {
       } else if (state.selectedTimeRange === "1ヶ月") {
         days = 30;
       }
+      //開発段階では動画生成を行わない
+      //const responseData = await homeService.generateMovie(
+      //  state.user?.id as string,
+      //  days
+      //);
 
-      const responseData = await homeService.generateMovie(
-        state.user?.id as string,
-        days
-      );
+      const responseData = await homeService.getMovie();
 
       // 開発モードの場合は注意書きを表示
       if (responseData.note) {
@@ -292,6 +295,21 @@ export const useHomeData = () => {
     }
   };
 
+  // 動画取得
+  const handleGetMovie = async () => {
+    try {
+      const videoUrl = await homeService.getMovie();
+      updateState({ videoUrl });
+      showToastMessage("動画を取得しました！");
+    } catch (error) {
+      if (error instanceof Error) {
+        showToastMessage(error.message);
+      } else {
+        showToastMessage("動画の取得に失敗しました");
+      }
+    }
+  };
+
   return {
     ...state,
     showToastMessage,
@@ -307,5 +325,6 @@ export const useHomeData = () => {
     setShowBreakupModal: (show: boolean) =>
       updateState({ showBreakupModal: show }),
     setInviteId: (id: string) => updateState({ inviteId: id }),
+    handleGetMovie,
   };
 };

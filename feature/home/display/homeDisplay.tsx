@@ -43,6 +43,7 @@ const HomeDisplay: React.FC = () => {
     handleGenerateMovie,
     setShowTimeModal,
     setShowBreakupModal,
+    handleGetMovie,
   } = useHomeData();
 
   if (loading) {
@@ -131,7 +132,7 @@ const HomeDisplay: React.FC = () => {
         onClose={() => setShowTimeModal(false)}
         selectedRange={selectedTimeRange}
         onSelectRange={handleSelectTimeRange}
-        onGenerate={handleGenerateMovie}
+        onGenerate={handleGetMovie}
       />
 
       {/* パートナー解除ボタン */}
