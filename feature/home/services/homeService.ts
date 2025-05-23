@@ -322,7 +322,14 @@ export const generateMovie = async (userId: string, days: number) => {
   }
 };
 
-export const getMovie = async () => {
+interface MovieResponse {
+  success: boolean;
+  message: string;
+  note?: string;
+  video_url?: string;
+}
+
+export const getMovie = async (): Promise<MovieResponse> => {
   const fastApiUrl =
     process.env.NEXT_PUBLIC_FASTAPI_URL || "http://localhost:8000";
   const response = await fetch(`${fastApiUrl}/api/dummy-video`);
@@ -330,7 +337,22 @@ export const getMovie = async () => {
   if (!response.ok) {
     throw new Error("Failed to fetch video");
   }
-  console.log(response);
+
+  // 检查响应类型
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("video/mp4")) {
+    throw new Error("Invalid video format");
+  }
+
+  // 获取视频数据
   const blob = await response.blob();
-  return URL.createObjectURL(blob);
+  
+  // 创建视频 URL
+  const videoUrl = URL.createObjectURL(new Blob([blob], { type: "video/mp4" }));
+  
+  return {
+    success: true,
+    message: "動画を取得しました",
+    video_url: videoUrl
+  };
 };
