@@ -2,6 +2,7 @@ import os
 from moviepy.editor import (
     ImageClip, concatenate_videoclips, TextClip, CompositeVideoClip, vfx
 )
+from moviepy.video.fx.all import fadein, fadeout
 
 def create_slideshow():
     image_dir = "generated_images"
@@ -11,10 +12,11 @@ def create_slideshow():
         print("No images found in the directory")
         return
     
-    duration = min(5, 30.0 / len(image_files))
+    duration = min(3, 30.0 / len(image_files))
+    fade_duration = 1.0  # フェードの持続時間（秒）
     clips = []
 
-    for image_file in image_files:
+    for i, image_file in enumerate(image_files):
         image_path = os.path.join(image_dir, image_file)
 
         # ズームイン効果を模擬する：resize + position + set_duration
@@ -24,6 +26,7 @@ def create_slideshow():
             .resize(height=1080)  # 高さを統一（幅は自動調整）
             .fx(vfx.resize, lambda t: 1 + 0.01 * t)  # 時間とともに拡大
         )
+        
 
         # テキスト（イベント名）を表示
         event_name = image_file.split('_')[1:-1]
@@ -35,6 +38,15 @@ def create_slideshow():
         )
 
         video_clip = CompositeVideoClip([image_clip, txt_clip])
+
+        # フェード効果の適用
+        if i == 0:  # 最初のクリップ
+            video_clip = video_clip.fx(fadeout, fade_duration)
+        elif i == len(image_files) - 1:  # 最後のクリップ
+            video_clip = video_clip.fx(fadein, fade_duration)
+        else:  # 中間のクリップ
+            video_clip = video_clip.fx(fadein, fade_duration).fx(fadeout, fade_duration)
+
         clips.append(video_clip)
 
     final_clip = concatenate_videoclips(clips, method="compose")
