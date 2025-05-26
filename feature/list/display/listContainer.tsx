@@ -24,7 +24,7 @@ const ListContainer: React.FC = () => {
   const [items, setItems] = useState<ItemType[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [actionName, setActionName] = useState("");
-  const [happinessChange, setHappinessChange] = useState<number>(0);
+  const [happinessChange, setHappinessChange] = useState<number | null>(null);
   const [isShowingPartnerList, setIsShowingPartnerList] = useState(false);
   const [myUid, setMyUid] = useState<string | null>(null);
   const [partnerUid, setPartnerUid] = useState<string | null>(null);
@@ -140,7 +140,7 @@ const ListContainer: React.FC = () => {
     setShowForm(false);
     setEditingItemId(null); // ← 念のためここで null に戻すの重要
     setActionName("");
-    setHappinessChange(0);
+    setHappinessChange(null);
   };
 
   const handleConfirmYes = async () => {
@@ -177,7 +177,10 @@ const ListContainer: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!actionName || myUid === null || loading) return;
+    if (!actionName || happinessChange === null || isNaN(happinessChange) || myUid === null || loading) {
+      alert("名前とポイントの両方を入力してください。");
+      return;
+    }
 
     setLoading(true);
 
@@ -209,8 +212,13 @@ const ListContainer: React.FC = () => {
           .select()
           .single();
 
-        if (actionError || !insertedAction) {
-          console.error("Action登録エラー:", actionError);
+          if (actionError) {
+            if (actionError.code === "23505") {
+              alert("同じ出来事はすでに登録されています。");
+            } else {
+              console.error("Action登録エラー:", actionError);
+            }
+            
           setLoading(false);
           return;
         }
@@ -272,8 +280,7 @@ const ListContainer: React.FC = () => {
   </div> 
 
       </header>
-
-      <div className="flex justify-center items-start my-8">
+      <div className="flex justify-center items-start mt-17 mb-8">
         <div className="flex flex-row gap-4">
           {[
             { key: "like", label: ["嬉しいこと", "リスト"] },
@@ -281,8 +288,8 @@ const ListContainer: React.FC = () => {
           ].map((item) => (
             <button
               key={item.key}
-              className={`text-3xl px-8 py-8 rounded font-semibold min-w-[220px] min-h-[100px] ${
-                listType === item.key ? "bg-yellow-600 text-white" : "bg-gray-300"
+              className={`text-3xl px-8 py-8 rounded font-semibold azuki-font min-w-[220px] min-h-[100px] ${
+                listType === item.key ? "bg-yellow-600 text-white azuki-font" : "bg-gray-300 azuki-font"
               }`}
               onClick={() => setListType(item.key as "like" | "sad")}
             >
@@ -298,7 +305,7 @@ const ListContainer: React.FC = () => {
 
       {showForm && (
         <div className="mb-6 p-4 mx-8 border rounded bg-gray-100">
-          <label className="block text-sm font-semibold mb-1 text-black">出来事</label>
+          <label className="block text-sm font-semibold mb-1 text-black azuki-font">出来事</label>
           <input
             type="text"
             placeholder="名前"
@@ -331,15 +338,20 @@ const ListContainer: React.FC = () => {
 
           <label className="block text-sm font-semibold mb-1 text-black">ポイント</label>
           <input
-            type="number"
-            value={Math.abs(happinessChange)}
-            onChange={(e) => {
-              const val = Number(e.target.value);
-              setHappinessChange(happinessChange < 0 ? -val : val);
-            }}
-            className="border p-2 rounded w-full mb-4 text-black"
-            min={0}
-          />
+  type="number"
+  value={typeof happinessChange === "number" ? Math.abs(happinessChange) : ""}
+  onChange={(e) => {
+    const val = e.target.value;
+    if (val === "") {
+      setHappinessChange(null);
+    } else {
+      const num = Number(val);
+      setHappinessChange(typeof happinessChange === "number" && happinessChange < 0 ? -num : num);
+    }
+  }}
+  className="border p-2 rounded w-full mb-4 text-black"
+  min={0}
+/>
 
           <div className="flex justify-end gap-4">
             <button
@@ -384,7 +396,7 @@ const ListContainer: React.FC = () => {
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6"
+      className="h-8 w-8"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -404,13 +416,13 @@ const ListContainer: React.FC = () => {
         className="flex-1 cursor-pointer"
         onClick={() => setConfirmingItem(item)}
       >
-        <span className="text-lg">{item.name}</span>
+        <span className="text-2xl azuki-font">{item.name}</span>
       </div>
 
       {/* ポイント表示 */}
       <span
         className={`font-bold text-4xl ${
-          item.type === "like" ? "text-black" : "text-blue-600"
+          item.type === "like" ? "text-pink-500 text-outline-white" : "text-blue-600 text-outline-white"
         }`}
       >
         {item.originalHappinessChange < 0 ? `-${item.point}` : item.point}
@@ -449,7 +461,7 @@ const ListContainer: React.FC = () => {
     onClick={() => {
       setEditingItemId(null);
       setActionName("");
-      setHappinessChange(1);
+      setHappinessChange(null);
       setShowForm(true);
     }}
     className="fixed bottom-20 right-6 w-16 h-16 rounded-full bg-green-500 text-white text-4xl flex items-center justify-center shadow-lg hover:bg-green-600 z-50"
