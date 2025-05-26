@@ -240,16 +240,37 @@ const ListContainer: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full relative">
-      <header className="w-full bg-white shadow p-4 flex justify-between items-center sticky top-0 z-10">
-        <div className="text-xl font-bold text-black">感情リスト</div>
+
+      {/* 上部の空白を白で埋めるための背景 */} 
+      <div className="fixed top-0 left-0 w-full h-15 bg-white z-[1]" /> 
+
+      <header className="w-full bg-white p-4 flex justify-between items-center sticky top-10 z-10">
+        <div className="azuki-font text-2xl font-bold text-pink-500 blue-outline">感情リスト</div>
         <button
-          className="text-sm bg-blue-500 text-white px-3 py-1 rounded"
+          className="text-lg bg-blue-500 text-white px-2.5 py-2 rounded azuki-font"
           onClick={() => setIsShowingPartnerList(!isShowingPartnerList)}
           disabled={!partnerUid}
           title={!partnerUid ? "まだ相手が居ません。パートナーの情報を登録しましょう！" : undefined}
         >
           {isShowingPartnerList ? "自分のリストへ" : "相手のリストへ"}
         </button>
+
+        
+  {/* 均等な波（上用） */} 
+  <div className="absolute bottom-[-15px] left-0 w-full overflow-hidden leading-[0] rotate-180"> 
+    <svg 
+      className="relative block w-full h-[32px]" 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 1200 120" 
+      preserveAspectRatio="none" 
+    > 
+      <path 
+        d="M0,30 Q 100,60 200,30 T 400,30 T 600,30 T 800,30 T 1000,30 T 1200,30 V120 H0 Z" 
+        fill="#ffffff" 
+      /> 
+    </svg> 
+  </div> 
+
       </header>
 
       <div className="flex justify-center items-start my-8">
