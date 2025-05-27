@@ -5,7 +5,6 @@ import UserStatus from "../components/UserStatus";
 import RecentActivities from "../components/RecentActivities";
 import InviteForm from "../components/InviteForm";
 import TimeRangeModal from "../components/TimeRangeModal";
-import BreakupModal from "../components/BreakupModal";
 import Toast from "../components/Toast";
 import VideoPlayer from "../components/VideoPlayer";
 import { styles } from "../utils/utils";
@@ -28,7 +27,6 @@ const HomeDisplay: React.FC = () => {
     pendingInvites,
     sentInvites,
 
-    showBreakupModal,
     showToast,
     toastMessage,
     showToastMessage,
@@ -37,7 +35,6 @@ const HomeDisplay: React.FC = () => {
     handleAcceptInvite,
     handleDeclineInvite,
     handleDeleteInvite,
-    handleBreakup,
 
     setShowBreakupModal,
   } = useHomeData();
@@ -101,15 +98,6 @@ const HomeDisplay: React.FC = () => {
       {/* 相手の幸福度（中央） */}
       <div className="flex items-center justify-center h-full">
         <div className="w-full max-w-xs">
-          {/* カップル画像 */}
-          <div className="flex justify-center mb-4">
-            <img
-              src="/feature/home/images/love_couple_good.png"
-              alt="カップル"
-              className="w-32 h-32 object-contain"
-            />
-          </div>
-
           {/* パートナーの幸福度 */}
           <UserStatus
             happiness={partnerHappiness}
@@ -123,8 +111,8 @@ const HomeDisplay: React.FC = () => {
         </div>
       </div>
 
-      {/* 動画生成ボタン */}
-      <div className="fixed bottom-20 left-4">
+      {/* スライドショー生成ボタン */}
+      <div className="fixed top-20 left-4">
         <button
           onClick={() => setShowTimeModal(true)}
           className={`${styles.button.action} ${
@@ -230,13 +218,6 @@ const HomeDisplay: React.FC = () => {
           パートナー解除
         </button>
       </div>
-
-      {/* パートナー解除確認モーダル */}
-      <BreakupModal
-        isOpen={showBreakupModal}
-        onClose={() => setShowBreakupModal(false)}
-        onConfirm={handleBreakup}
-      />
 
       {/* トースト通知 */}
       <Toast
