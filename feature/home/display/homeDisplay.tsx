@@ -7,6 +7,7 @@ import InviteForm from "../components/InviteForm";
 import TimeRangeModal from "../components/TimeRangeModal";
 import BreakupModal from "../components/BreakupModal";
 import Toast from "../components/Toast";
+import VideoPlayer from "../components/VideoPlayer";
 import { styles } from "../utils/utils";
 import { useHomeData } from "../hooks/useHomeData";
 
@@ -44,6 +45,8 @@ const HomeDisplay: React.FC = () => {
     setShowTimeModal,
     setShowBreakupModal,
     handleGetMovie,
+    videoUrl,
+    setVideoUrl,
   } = useHomeData();
 
   if (loading) {
@@ -158,6 +161,14 @@ const HomeDisplay: React.FC = () => {
         isVisible={showToast}
         onHide={() => showToastMessage("")}
       />
+
+      {/* 動画プレーヤー */}
+      {videoUrl && (
+        <VideoPlayer
+          videoUrl={videoUrl}
+          onClose={() => setVideoUrl(null)}
+        />
+      )}
     </div>
   );
 };

@@ -45,3 +45,11 @@ next-env.d.ts
 
 # personal notes
 Notebook.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
