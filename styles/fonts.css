@@ -1,0 +1,25 @@
+@font-face {
+  font-family: "Azuki";
+  src: url("/fonts/azuki.ttf") format("truetype");
+  font-display: swap;
+}
+
+.azuki-font {
+  font-family: "Azuki", sans-serif;
+}
+
+.blue-outline {
+  color: white;
+  text-shadow:
+    -2px -2px 0 #3b82f6,  /* 上左 */
+    -2px -2px 0 #3b82f6,
+    -2px  2px 0 #3b82f6,
+     0px 2px 0 #3b82f6,
+     2px 2px 0 #3b82f6,
+     2px 0px 0 #3b82f6,
+     2px -2px 0 #3b82f6,  /* 上右 */
+
+    -2px  2px 0 #3b82f6,  /* 下左 */
+     2px  2px 0 #3b82f6,  /* 下右 */
+     0px 0px 3px #3b82f6;
+}

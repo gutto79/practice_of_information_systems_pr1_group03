@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
 
   return (
     <footer
-      className="fixed bottom-0 z-50 w-full bg-fuchsia-700/95 backdrop-blur-sm border-t border-fuchsia-800"
+      className="fixed bottom-0 z-50 w-full bg-fuchsia-700/95 backdrop-blur-sm border-t border-fuchsia-800 azuki-font"
       style={footerStyle}
     >
       <nav className="flex justify-around items-center h-16">
@@ -27,28 +27,28 @@ const Footer: React.FC = () => {
           className="flex flex-col items-center justify-center"
           style={linkStyle}
         >
-          <span className="text-white text-sm">リスト</span>
+          <span className="text-white text-lg">リスト</span>
         </Link>
         <Link
           href="/home"
           className="flex flex-col items-center justify-center"
           style={linkStyle}
         >
-          <span className="text-white text-sm">ホーム</span>
+          <span className="text-white text-lg">ホーム</span>
         </Link>
         <Link
           href="/calendar"
           className="flex flex-col items-center justify-center"
           style={linkStyle}
         >
-          <span className="text-white text-sm">カレンダー</span>
+          <span className="text-white text-lg">カレンダー</span>
         </Link>
         <Link
           href="/search"
           className="flex flex-col items-center justify-center"
           style={linkStyle}
         >
-          <span className="text-white text-sm">検索</span>
+          <span className="text-white text-lg">検索</span>
         </Link>
       </nav>
     </footer>

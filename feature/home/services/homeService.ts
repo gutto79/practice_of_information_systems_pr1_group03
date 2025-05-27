@@ -281,30 +281,3 @@ export const breakupCouple = async (userId: string, partnerId: string) => {
       `and(uid1.eq.${userId},uid2.eq.${partnerId}),and(uid1.eq.${partnerId},uid2.eq.${userId})`
     );
 };
-
-/**
- * 動画生成APIを呼び出す
- * @param userId ユーザーID
- * @param days 日数
- * @returns APIレスポンス
- */
-export const generateMovie = async (userId: string, days: number) => {
-  const response = await fetch("/api/generate-movie", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      uid: userId,
-      days: days,
-    }),
-  });
-
-  const responseData = await response.json();
-
-  if (!response.ok) {
-    throw new Error(responseData.error || "動画生成に失敗しました");
-  }
-
-  return responseData;
-};

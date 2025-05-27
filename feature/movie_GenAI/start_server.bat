@@ -1,0 +1,6 @@
+@echo off
+echo 必要なパッケージをインストールしています...
+pip install -r requirements.txt
+
+echo FastAPIサーバーを起動しています...
+python api.py

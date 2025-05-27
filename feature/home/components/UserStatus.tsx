@@ -20,14 +20,14 @@ const UserStatus: React.FC<UserStatusProps> = ({
   return (
     <div className={isPartner ? "w-full max-w-xs" : "w-24"}>
       <div
-        className={`text-sm text-white mb-1 ${
-          isPartner ? "text-center" : "text-right"
+        className={`text-white mb-1 ${
+          isPartner ? "text-3xl text-center azuki-font" : "text-sm text-right azuki-font"
         }`}
       >
         {isPartner ? "相手の幸福度" : "自分の幸福度"}
       </div>
       <div
-        className={`relative w-full h-${isPartner ? "5" : "4"} ${getBarColor(
+        className={`relative w-full h-${isPartner ? "6" : "5"} ${getBarColor(
           gender,
           "bg"
         )} rounded-full overflow-hidden ${getBorderColor(gender)}`}
@@ -46,7 +46,7 @@ const UserStatus: React.FC<UserStatusProps> = ({
       </div>
       <div
         className={`text-sm text-white mt-1 ${
-          isPartner ? "text-center" : "text-right"
+          isPartner ? "text-xl text-center" : "text-right"
         }`}
       >
         {name || (isPartner ? "相手" : "自分")}

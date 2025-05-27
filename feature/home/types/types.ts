@@ -69,4 +69,5 @@ export interface HomeState {
   showBreakupModal: boolean;
   showToast: boolean;
   toastMessage: string;
+  videoUrl: string | null;
 }
