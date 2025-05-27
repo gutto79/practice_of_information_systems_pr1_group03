@@ -39,11 +39,18 @@ const HeartContainer: React.FC<{
   happiness: number; 
   gender: string | null;
   size?: "small" | "large";
-}> = ({ happiness, gender, size = "large" }) => {
-  const [animatedHappiness, setAnimatedHappiness] = useState(0);
-  const [gradientColors, setGradientColors] = useState(calculateGradientColors(0));
+  animate?: boolean;
+}> = ({ happiness, gender, size = "large", animate = true }) => {
+  const [animatedHappiness, setAnimatedHappiness] = useState(animate ? 0 : happiness);
+  const [gradientColors, setGradientColors] = useState(calculateGradientColors(animate ? 0 : happiness));
 
   useEffect(() => {
+    if (!animate) {
+      setAnimatedHappiness(happiness);
+      setGradientColors(calculateGradientColors(happiness));
+      return;
+    }
+
     // 重置动画状态
     setAnimatedHappiness(0);
     // 使用 requestAnimationFrame 实现平滑动画
@@ -51,7 +58,7 @@ const HeartContainer: React.FC<{
     const duration = 1500; // 动画持续时间（毫秒）
     const targetHappiness = happiness ?? 0;
 
-    const animate = () => {
+    const runAnimation = () => {
       const currentTime = Date.now();
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
@@ -65,12 +72,12 @@ const HeartContainer: React.FC<{
       setGradientColors(calculateGradientColors(currentHappiness));
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        requestAnimationFrame(runAnimation);
       }
     };
 
-    requestAnimationFrame(animate);
-  }, [happiness]);
+    requestAnimationFrame(runAnimation);
+  }, [happiness, animate]);
 
   const containerSize = size === "small" ? "w-24 h-24" : "w-64 h-64";
   const textSize = size === "small" ? "text-sm" : "text-3xl";
@@ -133,19 +140,29 @@ const UserStatus: React.FC<UserStatusProps> = ({
           {`${name || "相手"}の幸福度`}
         </div>
         <div className="flex justify-center">
-          <HeartContainer happiness={happiness ?? 0} gender={gender} size="large" />
+          <HeartContainer 
+            happiness={happiness ?? 0} 
+            gender={gender} 
+            size="large" 
+            animate={true}
+          />
         </div>
       </div>
     );
   }
 
-  // 右上角的小心形
+  // 右上角的小心形（不显示动画）
   return (
     <div className="w-24">
       <div className="text-white mb-1 text-sm text-right azuki-font">
         {`${name || "自分"}の幸福度`}
       </div>
-      <HeartContainer happiness={happiness ?? 0} gender={gender} size="small" />
+      <HeartContainer 
+        happiness={happiness ?? 0} 
+        gender={gender} 
+        size="small" 
+        animate={false}
+      />
     </div>
   );
 };
