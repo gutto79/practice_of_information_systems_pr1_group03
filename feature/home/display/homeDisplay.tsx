@@ -10,14 +10,13 @@ import Toast from "../components/Toast";
 import VideoPlayer from "../components/VideoPlayer";
 import { styles } from "../utils/utils";
 import { useHomeData } from "../hooks/useHomeData";
-
+import { useMovie } from "../hooks/useMovie";
 /**
  * ホーム画面表示コンポーネント
  */
 const HomeDisplay: React.FC = () => {
   const {
     hasPartner,
-    loading,
     userHappiness,
     userGender,
     userName,
@@ -28,8 +27,7 @@ const HomeDisplay: React.FC = () => {
     recentActions,
     pendingInvites,
     sentInvites,
-    showTimeModal,
-    selectedTimeRange,
+
     showBreakupModal,
     showToast,
     toastMessage,
@@ -40,16 +38,24 @@ const HomeDisplay: React.FC = () => {
     handleDeclineInvite,
     handleDeleteInvite,
     handleBreakup,
+
+    setShowBreakupModal,
+  } = useHomeData();
+
+  const {
+    showTimeModal,
+    selectedTimeRange,
     handleSelectTimeRange,
     handleGenerateMovie,
     setShowTimeModal,
-    setShowBreakupModal,
-    handleGetMovie,
     videoUrl,
     setVideoUrl,
-  } = useHomeData();
+    status,
+    loading: movieLoading,
+    clearError,
+  } = useMovie();
 
-  if (loading) {
+  if (user === null) {
     return (
       <div className={styles.loadingContainer}>
         <p>読み込み中...</p>
@@ -121,13 +127,89 @@ const HomeDisplay: React.FC = () => {
       <div className="fixed bottom-20 left-4">
         <button
           onClick={() => setShowTimeModal(true)}
-          className={styles.button.action}
+          className={`${styles.button.action} ${
+            movieLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          disabled={movieLoading}
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-            <path d="M8 5v14l11-7z" />
-          </svg>
+          {movieLoading ? (
+            <div className="flex items-center">
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span>生成中...</span>
+            </div>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
         </button>
       </div>
+
+      {/* 動画生成の進捗状況 */}
+      {status && (
+        <div
+          className={`fixed bottom-32 left-4 p-4 rounded-lg shadow-lg ${
+            status.status === "failed"
+              ? "bg-red-100 text-red-700"
+              : status.status === "completed"
+              ? "bg-green-100 text-green-700"
+              : "bg-blue-100 text-blue-700"
+          }`}
+        >
+          <div className="flex items-center">
+            {status.status === "processing" && (
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            )}
+            <p>{status.message}</p>
+            {status.status === "failed" && (
+              <button
+                onClick={clearError}
+                className="ml-2 text-sm underline hover:no-underline"
+              >
+                閉じる
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 時間範囲選択モーダル */}
       <TimeRangeModal
@@ -135,7 +217,8 @@ const HomeDisplay: React.FC = () => {
         onClose={() => setShowTimeModal(false)}
         selectedRange={selectedTimeRange}
         onSelectRange={handleSelectTimeRange}
-        onGenerate={handleGetMovie}
+        onGenerate={handleGenerateMovie}
+        disabled={movieLoading}
       />
 
       {/* パートナー解除ボタン */}
@@ -166,7 +249,10 @@ const HomeDisplay: React.FC = () => {
       {videoUrl && (
         <VideoPlayer
           videoUrl={videoUrl}
-          onClose={() => setVideoUrl(null)}
+          onClose={() => {
+            setVideoUrl(null);
+            clearError();
+          }}
         />
       )}
     </div>

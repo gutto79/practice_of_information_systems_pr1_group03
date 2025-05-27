@@ -64,10 +64,7 @@ export interface HomeState {
   userName: string | null;
   partnerName: string | null;
   recentActions: RecentAction[];
-  showTimeModal: boolean;
-  selectedTimeRange: TimeRange;
   showBreakupModal: boolean;
   showToast: boolean;
   toastMessage: string;
-  videoUrl: string | null;
 }
