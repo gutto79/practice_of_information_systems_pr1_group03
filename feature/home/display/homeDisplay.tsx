@@ -5,7 +5,6 @@ import UserStatus from "../components/UserStatus";
 import RecentActivities from "../components/RecentActivities";
 import InviteForm from "../components/InviteForm";
 import TimeRangeModal from "../components/TimeRangeModal";
-import BreakupModal from "../components/BreakupModal";
 import Toast from "../components/Toast";
 import VideoPlayer from "../components/VideoPlayer";
 import { styles } from "../utils/utils";
@@ -30,7 +29,6 @@ const HomeDisplay: React.FC = () => {
     sentInvites,
     showTimeModal,
     selectedTimeRange,
-    showBreakupModal,
     showToast,
     toastMessage,
     showToastMessage,
@@ -39,11 +37,9 @@ const HomeDisplay: React.FC = () => {
     handleAcceptInvite,
     handleDeclineInvite,
     handleDeleteInvite,
-    handleBreakup,
     handleSelectTimeRange,
     handleGenerateMovie,
     setShowTimeModal,
-    setShowBreakupModal,
     handleGetMovie,
     videoUrl,
     setVideoUrl,
@@ -136,23 +132,6 @@ const HomeDisplay: React.FC = () => {
         selectedRange={selectedTimeRange}
         onSelectRange={handleSelectTimeRange}
         onGenerate={handleGetMovie}
-      />
-
-      {/* パートナー解除ボタン */}
-      <div className="fixed bottom-20 right-4">
-        <button
-          className={styles.button.danger}
-          onClick={() => setShowBreakupModal(true)}
-        >
-          パートナー解除
-        </button>
-      </div>
-
-      {/* パートナー解除確認モーダル */}
-      <BreakupModal
-        isOpen={showBreakupModal}
-        onClose={() => setShowBreakupModal(false)}
-        onConfirm={handleBreakup}
       />
 
       {/* トースト通知 */}

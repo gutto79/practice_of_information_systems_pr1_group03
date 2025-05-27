@@ -24,7 +24,7 @@ const UserStatus: React.FC<UserStatusProps> = ({
           isPartner ? "text-3xl text-center azuki-font" : "text-sm text-right azuki-font"
         }`}
       >
-        {isPartner ? "相手の幸福度" : "自分の幸福度"}
+        {`${name || (isPartner ? "相手" : "自分")}の幸福度`}
       </div>
       <div
         className={`relative w-full h-${isPartner ? "6" : "5"} ${getBarColor(
@@ -43,13 +43,6 @@ const UserStatus: React.FC<UserStatusProps> = ({
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-white drop-shadow">
           {happiness ?? 0}%
         </span>
-      </div>
-      <div
-        className={`text-sm text-white mt-1 ${
-          isPartner ? "text-xl text-center" : "text-right"
-        }`}
-      >
-        {name || (isPartner ? "相手" : "自分")}
       </div>
     </div>
   );
