@@ -2,9 +2,33 @@ import os
 from moviepy.editor import (
     ImageClip, concatenate_videoclips, TextClip, CompositeVideoClip, vfx
 )
+import supabase
+from dotenv import load_dotenv
+from datetime import datetime
+
+# 環境変数の読み込み
+load_dotenv()
+
+# Supabaseの設定
+supabase_url = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+supabase_key = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+supabase_client = supabase.create_client(supabase_url, supabase_key)
+
+def get_action_name(timestamp_str):
+    # タイムスタンプをdatetimeオブジェクトに変換
+    timestamp = datetime.strptime(timestamp_str, "%Y%m%d_%H%M")
+    
+    # Supabaseからアクションを取得
+    response = supabase_client.table('Action').select(
+        'action_name, Calendar(timestamp)'
+    ).eq('Calendar.timestamp', timestamp.isoformat()).execute()
+    
+    if response.data and len(response.data) > 0:
+        return response.data[0]['action_name']
+    return ""
 
 def create_slideshow():
-    image_dir = "feature/movie_GenAI/generated_images"
+    image_dir = "generated_images"
     image_files = sorted([f for f in os.listdir(image_dir) if f.endswith('.png')])
     
     if not image_files:
@@ -29,12 +53,14 @@ def create_slideshow():
             .fx(vfx.resize, lambda t: 1 + 0.005 * t)           # ズーム効果を緩やかに
         )
 
-        # アクション名を表示
-        action_name = image_file.split('_')[1:-1]              # ファイル名からアクション名を抽出
-        action_text = ' '.join(action_name)                    # アンダースコアをスペースに変換
+        # ファイル名からaction_nameとhappiness_changeを抽出
+        name_parts = image_file.split('_')
+        action_name = name_parts[0]
+        happiness_change = name_parts[1]
+        display_text = f"{action_name} ({happiness_change})"
         txt_clip = (
             TextClip(
-                action_text,
+                display_text,
                 fontsize=50,
                 color='white',
                 stroke_color='black',
@@ -53,7 +79,7 @@ def create_slideshow():
         clips.append(video_clip)
 
     final_clip = concatenate_videoclips(clips, method="compose")
-    output_path = "feature/movie_GenAI/monthly_review.mp4"
+    output_path = "monthly_review.mp4"
     final_clip.write_videofile(output_path, fps=24)
     print(f"Slideshow video created: {output_path}")
 

@@ -93,9 +93,11 @@ def generate_images(uid, days):
         
         if image:
             # 画像の保存
+            action_name = event['action_name'].replace(' ', '').replace('/', '')
+            happiness_change = event['happiness_change']
             timestamp = event['Calendar'][0]['timestamp']
             date_str = datetime.fromisoformat(timestamp).strftime("%Y%m%d_%H%M")
-            image_path = os.path.join(output_dir, f"event_{date_str}_{i}.png")
+            image_path = os.path.join(output_dir, f"{action_name}_{happiness_change}_{date_str}_{i}.png")
             image.save(image_path)
             
             print(f"Generated image for event: {event['action_name']}")
