@@ -50,9 +50,9 @@ def create_slideshow():
         animation_speed = 1
         # 幸福度の絶対値が大きいほど、アニメーションが速くなる
         if abs(happiness_change) >= 80:
-            animation_speed = 5
+            animation_speed = 6
         elif abs(happiness_change) >= 50:
-            animation_speed = 3
+            animation_speed = 2
         else:
             animation_speed = 0.5
         print(animation_speed)
