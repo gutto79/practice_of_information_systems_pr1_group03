@@ -14,6 +14,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { useCalendarFunc } from "../hooks/useCalendarFunc";
 import { format } from "date-fns";
 import "./calendar.css";
+
 const CalendarDisplay = () => {
   const {
     handleSelect,
@@ -88,10 +89,10 @@ const CalendarDisplay = () => {
               month: "short",
             }}
             headerToolbar={{
-              start: "title", // タイトルを左に表示する。
-              center: "prev,next,today", // 「前月を表示」、「次月を表示」、「今日を表示」ができるボタンを画面の中央に表示する。
-              end: "dayGridMonth,timeGridWeek", // 月・週表示を切り替えるボタンを表示する。
-            }} // headerToolbarのタイトルに表示されるテキストを決定します。
+              start: "title", // ナビゲーションボタンを左に配置
+              center: "", // ビュー切り替えボタンを中央に配置
+              end: "prev,next dayGridMonth,timeGridWeek today", // タイトルを右に配置
+            }}
             ref={ref}
             select={handleSelect}
             events={ourEvents}
