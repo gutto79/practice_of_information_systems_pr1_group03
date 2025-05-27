@@ -104,15 +104,16 @@ const HomeDisplay: React.FC = () => {
         </div>
       </div>
 
-      {/* 動画生成ボタン */}
-      <div className="fixed bottom-20 left-4">
+      {/* スライドショー生成ボタン */}
+      <div className="fixed top-20 left-4">
         <button
           onClick={() => setShowTimeModal(true)}
-          className={styles.button.action}
+          className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 transition-colors text-white shadow-lg"
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <path d="M8 5v14l11-7z" />
           </svg>
+          <span className="text-sm font-medium">スライドショーを生成</span>
         </button>
       </div>
 

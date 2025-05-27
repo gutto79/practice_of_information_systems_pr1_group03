@@ -80,7 +80,7 @@ const HeartContainer: React.FC<{
   }, [happiness, animate]);
 
   const containerSize = size === "small" ? "w-24 h-24" : "w-64 h-64";
-  const textSize = size === "small" ? "text-sm" : "text-3xl";
+  const textSize = size === "small" ? "text-sm" : "text-5xl";
 
   return (
     <div className={`relative ${containerSize}`}>
@@ -116,7 +116,21 @@ const HeartContainer: React.FC<{
       </svg>
       {/* 幸福度数字 */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className={`${textSize} font-bold text-white drop-shadow-lg`}>
+        <span 
+          className={`${textSize} font-bold drop-shadow-lg`}
+          style={{
+            color: size === "large" ? gradientColors.start : "#ffffff",
+            ...(size === "large" ? {
+              textShadow: `
+                -1px -1px 0 #fff,
+                1px -1px 0 #fff,
+                -1px 1px 0 #fff,
+                1px 1px 0 #fff,
+                0 0 4px rgba(255,255,255,0.5)
+              `
+            } : {})
+          }}
+        >
           {animatedHappiness}
         </span>
       </div>
