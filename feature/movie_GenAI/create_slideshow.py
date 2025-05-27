@@ -2,6 +2,7 @@ import os
 from moviepy.editor import (
     ImageClip, concatenate_videoclips, TextClip, CompositeVideoClip, vfx
 )
+from moviepy.video.fx.all import fadein, fadeout
 
 def create_slideshow():
     image_dir = "generated_images"
@@ -11,11 +12,8 @@ def create_slideshow():
         print("No images found in the directory")
         return
     
-    # 各クリップの基本時間を設定
-    base_duration = min(5, 30.0 / len(image_files))
-    # クロスフェードの時間を設定（基本時間の40%に増加）
-    crossfade_duration = base_duration * 0.4
-    
+    duration = min(3, 30.0 / len(image_files))
+    fade_duration = 1.0  # フェードの持続時間（秒）
     clips = []
 
     for i, image_file in enumerate(image_files):
@@ -28,6 +26,7 @@ def create_slideshow():
             .resize(height=1080)                               # 高さを統一（幅は自動調整）
             .fx(vfx.resize, lambda t: 1 + 0.005 * t)           # ズーム効果を緩やかに
         )
+        
 
         # アクション名を表示
         action_name = image_file.split('_')[1:-1]              # ファイル名からアクション名を抽出
@@ -45,11 +44,15 @@ def create_slideshow():
         )
 
         video_clip = CompositeVideoClip([image_clip, txt_clip])
-        
-        # 最初のクリップ以外にクロスフェード効果を適用
-        if i > 0:
-            video_clip = video_clip.crossfadein(crossfade_duration)
-        
+
+        # フェード効果の適用
+        if i == 0:  # 最初のクリップ
+            video_clip = video_clip.fx(fadeout, fade_duration)
+        elif i == len(image_files) - 1:  # 最後のクリップ
+            video_clip = video_clip.fx(fadein, fade_duration)
+        else:  # 中間のクリップ
+            video_clip = video_clip.fx(fadein, fade_duration).fx(fadeout, fade_duration)
+
         clips.append(video_clip)
 
     final_clip = concatenate_videoclips(clips, method="compose")

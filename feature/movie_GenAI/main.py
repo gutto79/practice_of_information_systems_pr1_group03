@@ -28,7 +28,7 @@ if __name__ == "__main__":
     days = int(sys.argv[2])
     
     # 引数の検証
-    if days not in [1, 7, 30]:
+    if days not in [1, 7, 30, 60]:
         print("Error: days must be either 1, 7, or 30")
         sys.exit(1)
     

@@ -31,56 +31,62 @@ def get_partner_uid(uid):
     response = supabase_client.table('Couple').select('uid1, uid2').or_(f'uid1.eq.{uid},uid2.eq.{uid}').single().execute()
     if response.data:
         return response.data['uid2'] if response.data['uid1'] == uid else response.data['uid1']
-    return None # パートナーが見つからない場合
-
-
+    return None
 # 過去1ヶ月分のイベントを取得
-def get_monthly_events(uid, days):
+# 現状uid固定
+def get_monthly_events(uid,days):
     end_date = datetime.now()
     start_date = end_date - timedelta(days)
     
     response = supabase_client.table('Action').select(
         'action_name, happiness_change, Calendar(timestamp), User!Action_uid_fkey(gender)'
     ).eq('uid', uid).gte('Calendar.timestamp', start_date.isoformat()).lte('Calendar.timestamp', end_date.isoformat()).execute()
+    
     return response.data
 
 # イベントから画像生成用のプロンプトを作成
-def generate_prompt(event, previous_event=None):
-    prompt = "あなたはカップルのスライドショーの一部となる画像を生成するアシスタントです。"
-    happiness = "嬉しい" if event['happiness_change'] > 0 else "悲しい"
-    happiness_change = event['happiness_change']
+def generate_prompt(event):
+    
     gender = "男性" if event['User']['gender'] == 'male' else "女性"
+    happiness_change = event['happiness_change'] * 100
+    hap_abs = abs(happiness_change)
+    mood = "嬉しい" if happiness_change > 0 else "むかつく"
+    prompt = "あなたはカップルの感情的な思い出を表現するスライドショー用の画像を作成するアシスタントです。\n"
+    prompt += "・男の容姿:黒髪"
+    prompt += "・女の容姿:黒髪"
+    prompt += "・背景：家の中"
+    prompt += f"・出来事の内容: 「{event['action_name']}」\n"
+    prompt += f"・出来事を受けた人物: {gender}\n"
+    prompt += f"・感情の変化（-10000〜10000）: {happiness_change}（{mood}）\n"
+    prompt += f"・躍動感（0〜10000） : {hap_abs}\n"
     
-    # 前のイベントがある場合、連続性を持たせる
-    if previous_event:
-        prev_happiness = "嬉しい" if previous_event['happiness_change'] > 0 else "悲しい"
-        prev_gender = "男性" if previous_event['User']['gender'] == 'male' else "女性"
-        prompt += f"前のイベントでは{prev_gender}が{prev_happiness}気分でした。\n"
-    
-    prompt += f"性別：{gender}\n"
-    prompt += f"{happiness}度合い(-100~100)： {happiness_change}\n"
-    prompt += f"されたこと：{event['action_name']}\n"
-    prompt += "以上の出来事を表現した画像を生成してください。アニメ調で大袈裟にお願いします。"
-    
-    # 連続性を持たせるための追加指示
-    if previous_event:
-        prompt += "前のイベントからの流れを意識して、自然な展開になるようにしてください。"
+    prompt += (
+        "\n以上の情報をもとに、出来事の雰囲気や感情を視覚的に表現した一枚のアニメ風画像を生成してください。\n"
+        "画像はスライドショーの一部として使用されるため、感情が伝わりやすくしてください。\n"
+        "躍動感の大きさに応じて、motion blur effectやaction linesを画像に付与してください。\n"
+        "ズームアウトした構図で描写してください。"
+    )
     
     return prompt
 
 def generate_image_with_gpt(prompt):
+    # GPT-4 Vision APIを使用して画像を生成
     try:
+        # ペイロードを定義する
         payload = {
             "model": "gpt-image-1",
             "prompt": prompt,
-            "n": 1,
-            "size": "1024x1024",
+            "n": 1,  # 生成する画像の枚数
+            "size": "1024x1024",  # 画像の解像度
         }
 
+        # リクエストを送信
         response = requests.post(url, headers=headers, json=payload)
 
+        # レスポンスを確認
         if response.status_code == 200:
             data = response.json()
+            # 画像をダウンロード
             image_b64 = data['data'][0]['b64_json']
             image_bytes = base64.b64decode(image_b64)
             image = Image.open(io.BytesIO(image_bytes))
@@ -113,13 +119,13 @@ def generate_images(uid, days):
     
     # イベントを時系列順に結合
     all_events = my_events + partner_events
-    all_events.sort(key=lambda x: x['Calendar'][0]['timestamp'])
     
-    # 各イベントに対して画像を生成
-    previous_event = None
+    # Calendar配列が空でないことを確認してからソート
+    all_events = [event for event in all_events if event.get('Calendar') and len(event['Calendar']) > 0]
+    all_events.sort(key=lambda x: x['Calendar'][0]['timestamp'])
+  
     for i, event in enumerate(all_events):
-        # 前のイベントを考慮したプロンプトを生成
-        prompt = generate_prompt(event, previous_event)
+        prompt = generate_prompt(event)
         image = generate_image_with_gpt(prompt)
         
         if image:
@@ -128,14 +134,12 @@ def generate_images(uid, days):
             date_str = datetime.fromisoformat(timestamp).strftime("%Y%m%d_%H%M")
             image_path = os.path.join(output_dir, f"event_{date_str}_{i}.png")
             image.save(image_path)
-            
             print(f"Generated image for event: {event['action_name']}")
-            # 現在のイベントを前のイベントとして保存
-            previous_event = event
         else:
             print(f"Failed to generate image for event: {event['action_name']}")
 
 if __name__ == "__main__":
+    # テスト用
     import sys
     if len(sys.argv) > 2:
         uid = sys.argv[1]
