@@ -91,15 +91,6 @@ const HomeDisplay: React.FC = () => {
       {/* 相手の幸福度（中央） */}
       <div className="flex items-center justify-center h-full">
         <div className="w-full max-w-xs">
-          {/* カップル画像 */}
-          <div className="flex justify-center mb-4">
-            <img
-              src="/feature/home/images/love_couple_good.png"
-              alt="カップル"
-              className="w-32 h-32 object-contain"
-            />
-          </div>
-
           {/* パートナーの幸福度 */}
           <UserStatus
             happiness={partnerHappiness}
