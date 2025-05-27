@@ -1,5 +1,4 @@
 import os
-import openai
 from datetime import datetime, timedelta
 import supabase
 from dotenv import load_dotenv
