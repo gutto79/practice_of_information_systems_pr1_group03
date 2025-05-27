@@ -1,5 +1,5 @@
 /*───────────────────────────────────────────────*/
-/*  feature/search/display/SearchClient.tsx      */
+/* feature/search/display/SearchClient.tsx      */
 /*───────────────────────────────────────────────*/
 "use client";
 
@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
 /*─────────────────────*
- *  型宣言
+ * 型宣言
  *─────────────────────*/
 type FilterType = "" | "positive" | "negative";
 type SortOrder = "asc" | "desc";
@@ -28,7 +28,7 @@ interface Props {
 }
 
 /*─────────────────────*
- *  Supabase ブラウザクライアント
+ * Supabase ブラウザクライアント
  *─────────────────────*/
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
@@ -36,7 +36,7 @@ const supabase = createClient(
 );
 
 /*─────────────────────*
- *  メインコンポーネント
+ * メインコンポーネント
  *─────────────────────*/
 const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   /* URL パラメータ */
@@ -168,14 +168,16 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   };
 
   /* カード描画 */
+  // ===== MODIFIED SECTION START =====
   const renderCard = (i: Item) => (
     <li
       key={i.id}
-      className="text-black border rounded p-4 flex justify-between bg-white shadow-sm hover:shadow-md transition-shadow"
+      className="text-black border rounded-lg p-4 flex justify-between bg-white shadow-sm hover:shadow-md transition-shadow"
     >
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-black truncate">{i.label}</p>
-        <p className="text-sm text-black">
+        {/* 행동명 (i.label) 텍스트 크기를 text-lg로 변경 */}
+        <p className="text-lg font-medium text-black truncate azuki-font">{i.label}</p>
+        <p className="text-sm text-black azuki-font">
           幸福度: {i.weight > 0 ? "+" : ""}
           {i.weight}
         </p>
@@ -188,13 +190,14 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         <span className={i.isHappy ? "text-red-700" : "text-blue-700"}>
           {i.isHappy ? (i.liked ? "❤️" : "🤍") : i.liked ? "💙" : "🤍"}
         </span>
-        <span className="text-sm">{i.like_count}</span>
+        <span className="text-sm azuki-font">{i.like_count}</span>
       </button>
     </li>
   );
+  // ===== MODIFIED SECTION END =====
 
   /*─────────────────────*
-   *  JSX
+   * JSX
    *─────────────────────*/
   return (
     <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 pb-96 sm:pb-64 min-h-[calc(100vh-200px)]">
@@ -204,7 +207,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="キーワード検索"
-          className="flex-1 border rounded px-3 py-2 bg-white"
+          className="flex-1 border rounded px-3 py-2 bg-white text-black"
         />
         <button
           onClick={runSearch}
@@ -223,7 +226,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
           }`}
         >
           <span className="text-2xl">❤️</span>
-          <span className="text-black">Happy</span>
+          <span className="text-black">嬉しい</span>
         </button>
 
         <button
@@ -233,7 +236,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
           }`}
         >
           <span className="text-2xl">💙</span>
-          <span className="text-black">Bad</span>
+          <span className="text-black">悲しい</span>
         </button>
       </div>
 
