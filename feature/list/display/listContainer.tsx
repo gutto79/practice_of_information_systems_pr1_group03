@@ -274,43 +274,32 @@ const ListContainer: React.FC = () => {
   };
 
   // スライダーのグラデーションを計算する関数
-  // 値 (value) に応じてグラデーションのパーセンテージを調整
   const getSliderBackground = (value: number | null) => {
-    if (value === null) return "linear-gradient(to right, #4169E1, #FF69B4)"; // デフォルト
-    
+    if (value === null) {
+        // デフォルトのグラデーション（例えば、中央が0で青から赤へ）
+        return "linear-gradient(to right, #4169E1, #FFC0CB 50%, #FF6347)";
+    }
+
     // -100から100の範囲を0-100%に正規化
     const normalizedValue = (value + 100) / 2; // 0-100の範囲
 
-    // ピンク（赤）が負の領域に食い込むように色停止点を調整
-    // 例: -100 (青) -> 0 (中間) -> 100 (赤/ピンク)
-    // 0点を基準に、左にピンクを少し広げ、右にもピンクを広げる
-    // ここでは、全体の40%までが青系、そこからピンク系に変わるようなイメージ
-    const blueEnd = 40; // 青が終了する正規化されたパーセンテージ
-    const pinkStart = 60; // ピンクが開始する正規化されたパーセンテージ
-
-    // 値に基づいてグラデーションの位置を動的に調整
-    // これは簡易的な例です。より複雑なグラデーションには詳細な計算が必要です。
-    // 青 (低ポイント) -> 中間色 (0付近) -> ピンク/赤 (高ポイント)
-    // 便宜上、0点を50%として、その左右で色を調整します。
-    // 0 (中央) で色が完全に切り替わるのではなく、食い込ませるために、
-    // 0より少し左からピンクが始まり、0より少し右まで青がある、といったイメージで
+    // 色の定義
     const blueColor = "#4169E1"; // ロイヤルブルー
     const lightBlue = "#ADD8E6"; // ライトブルー
+    const middleColor = "#E0E0E0"; // グレーや非常に薄い色（0付近）
     const lightPink = "#FFC0CB"; // ライトピンク
-    const redColor = "#FF6347"; // トマトレッド (ピンクより強めにしたい場合)
+    const redColor = "#FF6347"; // トマトレッド
 
-    // スライダーの背景グラデーションを動的に生成
-    // valueが負の時は青が優勢、正の時は赤/ピンクが優勢
-    // 0%が-100、50%が0、100%が100と仮定
-    const blueStop = Math.max(0, 50 - value * 0.5); // value=100で0%, value=-100で100%
-    const pinkStop = Math.min(100, 50 - value * 0.5); // value=100で0%, value=-100で100%
+    // グラデーションの停止位置を調整して、ピンク/赤を強めに侵食させる
+    // 例: -100 (青) --- -20 (青から中間へ) --- 0 (中間) --- +20 (中間からピンクへ) --- +100 (ピンク/赤)
+    // 0点を中心に、負の側にもピンクが少し広がるように調整
+    const blueEndStop = 40; // 正規化された値で40%（元の値で-20）あたりまで青系
+    const pinkStartStop = 60; // 正規化された値で60%（元の値で+20）あたりからピンク系
+    // これにより、40%から60%の間（-20から+20）が中間色〜薄いグラデーションになり、
+    // 0点を含めてピンクが左に少し侵食するような見え方になります。
 
-    // 負の領域で青が強く、正の領域でピンク/赤が強いグラデーション
-    // 0付近で色が混ざる、または薄い中間色になるように調整
-    return `linear-gradient(to right, ${blueColor}, ${lightBlue} 40%, ${lightPink} 60%, ${redColor})`;
-    // または、もっと積極的にピンクを左に侵食させる場合 (例: -20%からピンクを開始)
-    // return `linear-gradient(to right, ${blueColor} 0%, ${lightBlue} 30%, ${lightPink} 50%, ${redColor} 70%, ${redColor} 100%)`;
-  };
+    return `linear-gradient(to right, ${blueColor}, ${lightBlue} ${blueEndStop}%, ${middleColor} 50%, ${lightPink} ${pinkStartStop}%, ${redColor})`;
+};
 
 
   return (
@@ -342,8 +331,13 @@ const ListContainer: React.FC = () => {
             <button
               key={item.key}
               className={`text-3xl px-8 py-8 rounded font-semibold azuki-font min-w-[220px] min-h-[100px] ${
-                listType === item.key ? "bg-yellow-600 text-white azuki-font" : "bg-gray-300 azuki-font"
-              }`}
+                // listTypeに応じて背景色と文字色を動的に変更
+                listType === item.key
+                  ? item.key === "like"
+                    ? "bg-pink-500 text-white" // 嬉しいことリストが選択されたらピンク
+                    : "bg-blue-500 text-white" // 悲しいことリストが選択されたら青
+                  : "bg-gray-300 text-black" // 選択されていない場合はグレーと黒文字
+              } azuki-font`}
               onClick={() => setListType(item.key as "like" | "sad")}
             >
               <div className="leading-tight">
@@ -370,7 +364,7 @@ const ListContainer: React.FC = () => {
           {/* 感情の種類ボタンを削除しました */}
 
           {/* ポイント表示を大きく */}
-          <label className="block text-xl font-bold mb-1 text-black">幸福度の変化: {happinessChange}</label>
+          <label className="block text-3xl font-bold mb-3 text-black">幸福度の変化: {happinessChange}</label>
           <input
             type="range" // typeをrangeに変更
             min="-100"   // 最小値
