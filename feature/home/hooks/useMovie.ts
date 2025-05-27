@@ -79,8 +79,8 @@ export const useMovie = (): UseMovieReturn => {
         loading: true,
         error: null,
         status: {
-          status: "pending",
-          message: "動画生成を開始します...",
+          status: "processing",
+          message: "動画生成中...",
         },
       });
       showToastMessage("動画生成を開始します...");
@@ -93,38 +93,19 @@ export const useMovie = (): UseMovieReturn => {
           ? 30
           : 1;
 
-      // 動画生成を開始し、完了を待機
-      const videoUrl = await movieService.generateMovieAndWait(
-        user.id, // 実際のユーザーIDを使用
-        days,
-        (status) => {
-          // 進捗状態を更新
-          updateState({ status });
-
-          // 状態に応じてトーストメッセージを表示
-          switch (status.status) {
-            case "processing":
-              showToastMessage("動画生成中...");
-              break;
-            case "completed":
-              showToastMessage("動画生成が完了しました！");
-              break;
-            case "failed":
-              showToastMessage(status.message || "動画生成に失敗しました");
-              break;
-          }
-        }
-      );
+      // 動画生成を実行
+      const response = await movieService.generateMovie(user.id, days);
 
       // 動画URLを設定
       updateState({
-        videoUrl,
+        videoUrl: response.video_url,
         status: {
           status: "completed",
           message: "動画生成が完了しました",
-          video_url: videoUrl,
+          video_url: response.video_url,
         },
       });
+      showToastMessage("動画生成が完了しました！");
     } catch (error) {
       console.error("動画生成エラー:", error);
       const errorMessage =

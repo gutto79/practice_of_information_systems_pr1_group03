@@ -22,7 +22,6 @@ const TimeRangeModal: React.FC<TimeRangeModalProps> = ({
   onSelectRange,
   onGenerate,
   disabled = false,
-  //onGetMovie
 }) => {
   const timeRanges: TimeRange[] = ["1日", "1週間", "1ヶ月"];
 

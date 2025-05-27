@@ -132,6 +132,8 @@ def generate_images(uid, days):
             action_name = event['action_name'].replace(' ', '').replace('/', '')
             happiness_change = event['happiness_change']
             timestamp = event['Calendar'][0]['timestamp']
+            # Handle timestamp with milliseconds by removing them
+            timestamp = timestamp.split('.')[0]  # Remove milliseconds
             date_str = datetime.fromisoformat(timestamp).strftime("%Y%m%d_%H%M")
             image_path = os.path.join(output_dir, f"{action_name}_{happiness_change}_{date_str}_{i}.png")
             image.save(image_path)
