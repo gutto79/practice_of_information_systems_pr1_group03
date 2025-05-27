@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HomeState, Invite, TimeRange } from "../types/types";
 import * as homeService from "../services/homeService";
+import * as movieService from "../services/movieService";
+import type { MovieResponse } from "../services/movieService";
 
 /**
  * ホーム画面のデータと機能を管理するカスタムフック
@@ -256,56 +258,44 @@ export const useHomeData = () => {
     updateState({ selectedTimeRange: range });
   };
 
-  interface MovieResponse {
-    success: boolean;
-    message: string;
-    note?: string;
-    video_url?: string;
-  }
-
   // 動画生成
   const handleGenerateMovie = async () => {
     try {
       showToastMessage("動画生成中...");
+      updateState({ loading: true });
 
-      // 日数設定
-      let days = 1;
-      if (state.selectedTimeRange === "1週間") {
-        days = 7;
-      } else if (state.selectedTimeRange === "1ヶ月") {
-        days = 30;
-      }
-      //開発段階では動画生成を行わない
-      //const responseData = await homeService.generateMovie(
-      //  state.user?.id as string,
-      //  days
+      // TODO: Implement actual movie generation
+      // When implementing actual movie generation, we'll need to calculate days based on selectedTimeRange
+      //const responseData = await movieService.generateMovie(
+      //  user?.uid || "",
+      //  state.selectedTimeRange === "1週間" ? 7 : state.selectedTimeRange === "1ヶ月" ? 30 : 1
       //);
 
-      const responseData = await homeService.getMovie() as MovieResponse;
+      // Temporary: Use dummy video for now
+      const responseData = (await movieService.getMovie()) as MovieResponse;
 
       // 開発モードの場合は注意書きを表示
-      if (responseData.note) {
-        showToastMessage(responseData.message);
-        // 3秒後に注意書きを表示
-        setTimeout(() => {
-          showToastMessage(responseData.note || "");
-        }, 3000);
-      } else {
-        showToastMessage("動画が生成されました！");
+      if (process.env.NODE_ENV === "development") {
+        showToastMessage("開発モード: ダミー動画を使用しています");
+      }
+
+      if (responseData.video_url) {
+        updateState({ videoUrl: responseData.video_url });
       }
     } catch (error) {
-      if (error instanceof Error) {
-        showToastMessage(error.message);
-      } else {
-        showToastMessage("動画生成に失敗しました");
-      }
+      console.error("動画生成エラー:", error);
+      showToastMessage(
+        error instanceof Error ? error.message : "動画生成に失敗しました"
+      );
+    } finally {
+      updateState({ loading: false });
     }
   };
 
   // 動画取得
   const handleGetMovie = async () => {
     try {
-      const response = await homeService.getMovie();
+      const response = await movieService.getMovie();
       if (response.video_url) {
         updateState({ videoUrl: response.video_url });
         showToastMessage("動画を取得しました！");
