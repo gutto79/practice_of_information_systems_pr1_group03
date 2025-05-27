@@ -28,6 +28,7 @@ export const useHomeData = () => {
     showBreakupModal: false,
     showToast: false,
     toastMessage: "",
+    videoUrl: null,
   });
 
   const router = useRouter();
@@ -255,6 +256,13 @@ export const useHomeData = () => {
     updateState({ selectedTimeRange: range });
   };
 
+  interface MovieResponse {
+    success: boolean;
+    message: string;
+    note?: string;
+    video_url?: string;
+  }
+
   // 動画生成
   const handleGenerateMovie = async () => {
     try {
@@ -267,18 +275,20 @@ export const useHomeData = () => {
       } else if (state.selectedTimeRange === "1ヶ月") {
         days = 30;
       }
+      //開発段階では動画生成を行わない
+      //const responseData = await homeService.generateMovie(
+      //  state.user?.id as string,
+      //  days
+      //);
 
-      const responseData = await homeService.generateMovie(
-        state.user?.id as string,
-        days
-      );
+      const responseData = await homeService.getMovie() as MovieResponse;
 
       // 開発モードの場合は注意書きを表示
       if (responseData.note) {
         showToastMessage(responseData.message);
         // 3秒後に注意書きを表示
         setTimeout(() => {
-          showToastMessage(responseData.note);
+          showToastMessage(responseData.note || "");
         }, 3000);
       } else {
         showToastMessage("動画が生成されました！");
@@ -288,6 +298,25 @@ export const useHomeData = () => {
         showToastMessage(error.message);
       } else {
         showToastMessage("動画生成に失敗しました");
+      }
+    }
+  };
+
+  // 動画取得
+  const handleGetMovie = async () => {
+    try {
+      const response = await homeService.getMovie();
+      if (response.video_url) {
+        updateState({ videoUrl: response.video_url });
+        showToastMessage("動画を取得しました！");
+      } else {
+        throw new Error("動画のURLを取得できませんでした");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        showToastMessage(error.message);
+      } else {
+        showToastMessage("動画の取得に失敗しました");
       }
     }
   };
@@ -307,5 +336,7 @@ export const useHomeData = () => {
     setShowBreakupModal: (show: boolean) =>
       updateState({ showBreakupModal: show }),
     setInviteId: (id: string) => updateState({ inviteId: id }),
+    handleGetMovie,
+    setVideoUrl: (url: string | null) => updateState({ videoUrl: url }),
   };
 };

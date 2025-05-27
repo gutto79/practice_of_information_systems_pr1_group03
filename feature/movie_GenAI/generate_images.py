@@ -7,6 +7,7 @@ import base64
 import requests
 from PIL import Image
 import io
+import shutil
 
 # 環境変数の読み込み
 load_dotenv()
@@ -25,6 +26,12 @@ headers = {
     "Content-Type": "application/json"
 }
 
+# カップルテーブルからパートナーのuidを取得
+def get_partner_uid(uid):
+    response = supabase_client.table('Couple').select('uid1, uid2').or_(f'uid1.eq.{uid},uid2.eq.{uid}').single().execute()
+    if response.data:
+        return response.data['uid2'] if response.data['uid1'] == uid else response.data['uid1']
+    return None
 # 過去1ヶ月分のイベントを取得
 # 現状uid固定
 def get_monthly_events(uid,days):
@@ -34,19 +41,32 @@ def get_monthly_events(uid,days):
     response = supabase_client.table('Action').select(
         'action_name, happiness_change, Calendar(timestamp), User!Action_uid_fkey(gender)'
     ).eq('uid', uid).gte('Calendar.timestamp', start_date.isoformat()).lte('Calendar.timestamp', end_date.isoformat()).execute()
-    print(response.data)
+    
     return response.data
 
 # イベントから画像生成用のプロンプトを作成
 def generate_prompt(event):
-    prompt = "あなたはカップルのスライドショーの一部となる画像を生成するアシスタントです。"
-    happiness = "嬉しい" if event['happiness_change'] > 0 else "悲しい"
-    happiness_change = event['happiness_change']
+    
     gender = "男性" if event['User']['gender'] == 'male' else "女性"
-    prompt += f"性別：{gender}\n"
-    prompt += f"{happiness}度合い： {happiness_change}\n"
-    prompt += f"されたこと：{event['action_name']}\n"
-    prompt += "以上の出来事を表現した画像を生成してください。アニメ調でお願いします。"
+    happiness_change = event['happiness_change'] * 100
+    hap_abs = abs(happiness_change)
+    mood = "嬉しい" if happiness_change > 0 else "むかつく"
+    prompt = "あなたはカップルの感情的な思い出を表現するスライドショー用の画像を作成するアシスタントです。\n"
+    prompt += "・男の容姿:黒髪"
+    prompt += "・女の容姿:黒髪"
+    prompt += "・背景：家の中"
+    prompt += f"・出来事の内容: 「{event['action_name']}」\n"
+    prompt += f"・出来事を受けた人物: {gender}\n"
+    prompt += f"・感情の変化（-10000〜10000）: {happiness_change}（{mood}）\n"
+    prompt += f"・躍動感（0〜10000） : {hap_abs}\n"
+    
+    prompt += (
+        "\n以上の情報をもとに、出来事の雰囲気や感情を視覚的に表現した一枚のアニメ風画像を生成してください。\n"
+        "画像はスライドショーの一部として使用されるため、感情が伝わりやすくしてください。\n"
+        "躍動感の大きさに応じて、motion blur effectやaction linesを画像に付与してください。\n"
+        "ズームアウトした構図で描写してください。"
+    )
+    
     return prompt
 
 def generate_image_with_gpt(prompt):
@@ -79,15 +99,32 @@ def generate_image_with_gpt(prompt):
 def generate_images(uid, days):
     print(f"Generating images for user {uid} with days={days}")
     
+    # パートナーのuidを取得
+    partner_uid = get_partner_uid(uid)
+    if not partner_uid:
+        print("No partner found")
+        return
+    
     # 出力ディレクトリの作成
     output_dir = "feature/movie_GenAI/generated_images"
-    os.makedirs(output_dir, exist_ok=True)
     
-    # イベントの取得
-    events = get_monthly_events(uid, days)
+    # 既存の画像を削除
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
     
-    # 各イベントに対して画像を生成
-    for i, event in enumerate(events):
+    # 両方のユーザーのイベントを取得
+    my_events = get_monthly_events(uid, days)
+    partner_events = get_monthly_events(partner_uid, days)
+    
+    # イベントを時系列順に結合
+    all_events = my_events + partner_events
+    
+    # Calendar配列が空でないことを確認してからソート
+    all_events = [event for event in all_events if event.get('Calendar') and len(event['Calendar']) > 0]
+    all_events.sort(key=lambda x: x['Calendar'][0]['timestamp'])
+  
+    for i, event in enumerate(all_events):
         prompt = generate_prompt(event)
         image = generate_image_with_gpt(prompt)
         
@@ -99,7 +136,6 @@ def generate_images(uid, days):
             date_str = datetime.fromisoformat(timestamp).strftime("%Y%m%d_%H%M")
             image_path = os.path.join(output_dir, f"{action_name}_{happiness_change}_{date_str}_{i}.png")
             image.save(image_path)
-            
             print(f"Generated image for event: {event['action_name']}")
         else:
             print(f"Failed to generate image for event: {event['action_name']}")

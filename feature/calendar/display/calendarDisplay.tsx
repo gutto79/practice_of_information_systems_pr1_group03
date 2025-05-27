@@ -16,19 +16,9 @@ import { format } from "date-fns";
 import "./calendar.css";
 const CalendarDisplay = () => {
   const {
-    eventsTitle,
-    setEventsTitle,
-    eventsStartDate,
-    setEventsStartDate,
-    eventsStartTime,
-    setEventsStartTime,
-    isOpenSheet,
-    setIsOpenSheet,
     handleSelect,
     ref,
-    myEvents,
-    onAddEvent,
-    handleDateClick,
+    ourEvents,
     selectedDate,
     selectedEvent,
     setSelectedEvent,
@@ -46,11 +36,16 @@ const CalendarDisplay = () => {
               <>
                 <h2 className="text-xl font-bold mb-4">{selectedEvent.title}</h2>
                 <p className="mb-2">
-                  開始時間: {format(new Date(selectedEvent.start), 'yyyy/MM/dd HH:mm')}
+                  時間: {format(new Date(selectedEvent.start), 'yyyy/MM/dd HH:mm')}
                 </p>
                 {selectedEvent.extendedProps?.happiness_change && (
                   <p className="mb-2">
                     幸福度の変化: {selectedEvent.extendedProps.happiness_change}
+                  </p>
+                )}
+                {selectedEvent.extendedProps?.userName && (
+                  <p className="mb-2 text-blue-600">
+                    {selectedEvent.extendedProps.isPartner ? 'パートナー' : 'あなた'}: {selectedEvent.extendedProps.userName}
                   </p>
                 )}
               </>
@@ -80,8 +75,7 @@ const CalendarDisplay = () => {
             slotDuration="00:30:00" // タイムスロットを表示する頻度。
             //ユーザーはクリックしてドラッグすることで、複数の日付または時間帯を強調表示できます。
             //ユーザーがクリックやドラッグで選択できるようにするには、インタラクション・プラグインをロードし、このオプションをtrueに設定する必要があります。
-            selectable={true}
-            dateClick={handleDateClick}
+            selectable={false}
             eventClick={handleEventClick}
             businessHours={{
               daysOfWeek: [1, 2, 3, 4, 5],
@@ -100,7 +94,27 @@ const CalendarDisplay = () => {
             }} // headerToolbarのタイトルに表示されるテキストを決定します。
             ref={ref}
             select={handleSelect}
-            events={myEvents}
+            events={ourEvents}
+            eventTimeFormat={{
+              hour: '2-digit',
+              minute: '2-digit',
+              meridiem: false,
+              hour12: false
+            }}
+            eventDisplay="block"
+            eventContent={(eventInfo) => {
+              return {
+                html: `
+                  <div class="fc-event-main-frame">
+                    <div class="fc-event-title-container">
+                      <div class="fc-event-title fc-sticky">
+                        ${eventInfo.event.title}
+                      </div>
+                    </div>
+                  </div>
+                `
+              };
+            }}
           />
       </div>
     </div>

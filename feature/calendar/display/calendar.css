@@ -80,17 +80,17 @@
 .fc-timegrid-slot,
 .fc-timegrid-slot-label,
 .fc-timegrid-slot-lane{
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 /* カレンダーのヘッダー部分の角を丸くする */
 .fc-col-header {
-  border-radius: 8px 8px 0 0;
+  border-radius: 10px 10px 0 0;
 }
 
 /* カレンダーのイベントの角を丸くする */
 .fc-event {
-  border-radius: 6px !important;
+  border-radius: 10px !important;
 }
 
 /* カレンダーのビューの角を丸くする */

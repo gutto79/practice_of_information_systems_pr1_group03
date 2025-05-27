@@ -27,6 +27,22 @@
   }
 }
 
+@font-face {
+  font-family: "Azuki";
+  src: url("/fonts/azuki.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.azuki-font {
+  font-family: "Azuki", sans-serif;
+}
+
+.text-outline-white {
+  text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white,
+    1px 1px 0 white;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
