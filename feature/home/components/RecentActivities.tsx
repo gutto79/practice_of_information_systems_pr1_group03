@@ -12,18 +12,18 @@ interface RecentActivitiesProps {
 const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions }) => {
   return (
     <div className="mt-4 bg-white rounded-lg shadow p-4">
-      <h3 className="text-sm font-medium text-gray-700 mb-2">最近の活動</h3>
+      <h3 className="text-lg font-medium text-gray-700 mb-2 azuki-font">最近の活動</h3>
       <ul className="space-y-2">
         {actions.length > 0 ? (
           actions.map((action, index) => (
             <li
               key={index}
-              className="flex justify-between items-center text-sm"
+              className="flex justify-between items-center text-lg azuki-font"
             >
               <div className="flex items-center">
                 <span className="text-gray-600">{action.action_name}</span>
                 <span
-                  className={`ml-2 text-xs ${
+                  className={`ml-2 text-lg ${
                     action.happiness_change >= 0
                       ? "text-green-500"
                       : "text-red-500"
