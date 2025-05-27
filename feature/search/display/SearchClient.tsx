@@ -11,6 +11,7 @@ import { createClient } from "@supabase/supabase-js";
  *  型宣言
  *─────────────────────*/
 type FilterType = "" | "positive" | "negative";
+type SortOrder = "asc" | "desc";
 
 interface Item {
   id: number;
@@ -46,6 +47,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   /* フォーム state */
   const [query, setQuery] = React.useState<string>(initialQuery);
   const [type, setType] = React.useState<FilterType>(initialType);
+  const [activeSection, setActiveSection] = React.useState<"all" | "happy" | "bad">("all");
 
   /* 検索結果 state */
   const [items, setItems] = React.useState<{ happy: Item[]; bad: Item[] }>({
@@ -195,35 +197,46 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
    *  JSX
    *─────────────────────*/
   return (
-    <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6">
+    <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 pb-64 sm:pb-48 min-h-[calc(100vh-200px)]">
       {/* ── 検索バー ─────────────────── */}
-      <div className="flex flex-col sm:flex-row gap-2 bg-white p-4 rounded border text-black">
+      <div className="flex gap-2 bg-white p-4 rounded border sticky top-4 z-10">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="キーワード検索"
-          className="w-full border rounded px-3 py-2 bg-white"
+          className="flex-1 border rounded px-3 py-2 bg-white"
         />
-        <div className="flex gap-2">
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as FilterType)}
-            className="border rounded px-2 py-2 bg-white flex-1"
-          >
-            <option value="">全部</option>
-            <option value="positive">うれしい</option>
-            <option value="negative">いやだ</option>
-          </select>
-          <button
-            onClick={runSearch}
-            className="bg-fuchsia-700 hover:bg-fuchsia-800 text-white px-4 py-2 rounded whitespace-nowrap"
-          >
-            検索
-          </button>
-        </div>
+        <button
+          onClick={runSearch}
+          className="bg-fuchsia-700 hover:bg-fuchsia-800 text-white px-4 py-2 rounded whitespace-nowrap"
+        >
+          検索
+        </button>
       </div>
 
-      
+      {/* ── ソートボタン ─────────────────── */}
+      <div className="flex gap-2 text-lg mb-2">
+        <button
+          onClick={() => setActiveSection(activeSection === "happy" ? "all" : "happy")}
+          className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
+            activeSection === "happy" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+          }`}
+        >
+          <span className="text-2xl">❤️</span>
+          <span className="text-black">Happy</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSection(activeSection === "bad" ? "all" : "bad")}
+          className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
+            activeSection === "bad" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+          }`}
+        >
+          <span className="text-2xl">💙</span>
+          <span className="text-black">Bad</span>
+        </button>
+      </div>
+
       {/* ── 検索結果 ─────────────────── */}
       {loading ? (
         <p className="text-center text-black pt-8">読み込み中…</p>
@@ -231,23 +244,15 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         <p className="text-black text-center pt-8">該当する項目がありません</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          {/* Happyセクション - ネガティブフィルター時は非表示 */}
-          {type !== "negative" && (
+          {/* Happyセクション */}
+          {(activeSection === "all" || activeSection === "happy") && type !== "negative" && (
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-black sm:hidden flex items-center gap-2 bg-white p-3 rounded-lg border shadow-sm">
-                <span className="text-2xl">❤️</span>
-                Happy
-              </h2>
               <ul className="space-y-4">{items.happy.map(renderCard)}</ul>
             </div>
           )}
-          {/* Badセクション - ポジティブフィルター時は非表示 */}
-          {type !== "positive" && (
+          {/* Badセクション */}
+          {(activeSection === "all" || activeSection === "bad") && type !== "positive" && (
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-black sm:hidden flex items-center gap-2 bg-white p-3 rounded-lg border shadow-sm">
-                <span className="text-2xl">💙</span>
-                Bad
-              </h2>
               <ul className="space-y-4">{items.bad.map(renderCard)}</ul>
             </div>
           )}
