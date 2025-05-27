@@ -94,7 +94,7 @@ const LoginDisplay: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h1 className="mb-6 text-2xl font-bold text-center">ログイン</h1>
+        <h1 className="mb-6 text-2xl font-bold text-center text-black azuki-font">ログイン</h1>
 
         {error && (
           <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
@@ -104,7 +104,7 @@ const LoginDisplay: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block mb-1 text-sm font-medium">
+            <label htmlFor="email" className="block mb-1 text-sm font-medium text-black azuki-font">
               メールアドレス
             </label>
             <input
@@ -121,7 +121,7 @@ const LoginDisplay: React.FC = () => {
           <div>
             <label
               htmlFor="password"
-              className="block mb-1 text-sm font-medium"
+              className="block mb-1 text-sm font-medium text-black azuki-font"
             >
               パスワード
             </label>
@@ -149,9 +149,9 @@ const LoginDisplay: React.FC = () => {
               type="button"
               onClick={handleSignUp}
               disabled={loading}
-              className="text-sm text-fuchsia-700 hover:underline"
+              className="text-xl text-fuchsia-700 hover:underline azuki-font"
             >
-              アカウント登録はこちら
+              初回アカウント登録
             </button>
           </div>
         </form>

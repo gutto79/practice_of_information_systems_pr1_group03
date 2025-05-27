@@ -83,7 +83,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full bg-fuchsia-700 border-b border-fuchsia-800 shadow-sm">
       <div className="container flex items-center justify-center h-16 px-4 mx-auto relative">
-        <h1 className="text-xl font-bold text-white">幸福度可視化</h1>
+        {/*<h1 className="text-2xl font-bold text-white azuki-font">幸福度可視化</h1>*/}
 
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <div className="absolute right-4">
@@ -114,25 +114,25 @@ export default function Header() {
           </div>
           <PopoverContent className="w-72 bg-white" align="end">
             <div className="grid gap-4">
-              <div className="font-medium text-lg">ユーザー設定</div>
+              <div className="font-medium text-lg text-black">ユーザー設定</div>
 
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <label htmlFor="username" className="text-sm font-medium">
+                  <label htmlFor="username" className="text-sm font-medium text-black">
                     ユーザー名
                   </label>
                   <input
                     id="username"
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     placeholder="ユーザー名を入力"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">性別</label>
+                <div className="space-y-2 text-black">
+                  <label className="text-sm font-medium text-black">性別</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2">
                       <input

@@ -150,11 +150,11 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
 
   /* カード描画 */
   const renderCard = (i: Item) => (
-    <li key={i.id} className="border rounded p-4 flex justify-between bg-white">
+    <li key={i.id} className="text-black border rounded p-4 flex justify-between bg-white">
       <div>
-        <p className="font-medium">{i.label}</p>
-        <p className="text-sm text-gray-500">
-          重み: {i.weight > 0 ? '+' : ''}{i.weight}
+        <p className="font-medium　text-black">{i.label}</p>
+        <p className="text-sm text-black">
+          幸福度: {i.weight > 0 ? '+' : ''}{i.weight}
         </p>
       </div>
 
@@ -178,7 +178,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   return (
     <section className="space-y-6 max-w-4xl mx-auto p-6">
       {/* ── 検索バー ─────────────────── */}
-      <div className="flex flex-wrap gap-2 bg-white p-4 rounded border">
+      <div className="flex flex-wrap gap-2 bg-white p-4 rounded border text-black">
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
@@ -192,7 +192,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         >
           <option value="">全部</option>
           <option value="positive">うれしい</option>
-          <option value="negative">いやな</option>
+          <option value="negative">いやだ</option>
         </select>
         <button
           onClick={runSearch}
@@ -205,16 +205,16 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
       {/* ── 見出し行（Happy / Bad）──────── */}
       <div className="grid md:grid-cols-2 gap-6 text-lg mb-2">
         {/* Happy */}
-        <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border">
+        <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border text-black">
           <span className="text-red-700">❤️</span>
           Happy
-          <span className="text-sm font-normal text-gray-600 ml-1">
+          <span className="text-sm font-normal text-gray-600 ml-1 text-black">
             (いいね順)
           </span>
         </div>
 
         {/* Bad */}
-        <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border">
+        <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border text-black">
           <span className="text-blue-700">💙</span>
           Bad
           <span className="text-sm font-normal text-gray-600 ml-1">
@@ -225,9 +225,9 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
 
       {/* ── 検索結果 ─────────────────── */}
       {loading ? (
-        <p className="text-center text-gray-400 pt-8">読み込み中…</p>
+        <p className="text-center text-black pt-8">読み込み中…</p>
       ) : items.happy.length + items.bad.length === 0 ? (
-        <p className="text-gray-500 text-center pt-8">該当する項目がありません</p>
+        <p className="text-black text-center pt-8">該当する項目がありません</p>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
           <ul className="space-y-4">
