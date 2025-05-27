@@ -47,7 +47,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   /* フォーム state */
   const [query, setQuery] = React.useState<string>(initialQuery);
   const [type, setType] = React.useState<FilterType>(initialType);
-  const [activeSection, setActiveSection] = React.useState<"all" | "happy" | "bad">("all");
+  const [activeSection, setActiveSection] = React.useState<"all" | "happy" | "bad">("happy");
 
   /* 検索結果 state */
   const [items, setItems] = React.useState<{ happy: Item[]; bad: Item[] }>({
@@ -197,7 +197,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
    *  JSX
    *─────────────────────*/
   return (
-    <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 pb-64 sm:pb-48 min-h-[calc(100vh-200px)]">
+    <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 pb-96 sm:pb-64 min-h-[calc(100vh-200px)]">
       {/* ── 検索バー ─────────────────── */}
       <div className="flex gap-2 bg-white p-4 rounded border sticky top-4 z-10">
         <input
