@@ -169,10 +169,10 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   const renderCard = (i: Item) => (
     <li
       key={i.id}
-      className="text-black border rounded p-4 flex justify-between bg-white"
+      className="text-black border rounded p-4 flex justify-between bg-white shadow-sm hover:shadow-md transition-shadow"
     >
-      <div>
-        <p className="font-medium　text-black">{i.label}</p>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-black truncate">{i.label}</p>
         <p className="text-sm text-black">
           幸福度: {i.weight > 0 ? "+" : ""}
           {i.weight}
@@ -181,12 +181,12 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
 
       <button
         onClick={() => toggleLike(i.id, i.liked)}
-        className="flex items-center gap-1 focus:outline-none"
+        className="flex items-center gap-1 focus:outline-none ml-4 flex-shrink-0"
       >
         <span className={i.isHappy ? "text-red-700" : "text-blue-700"}>
           {i.isHappy ? (i.liked ? "❤️" : "🤍") : i.liked ? "💙" : "🤍"}
         </span>
-        {i.like_count}
+        <span className="text-sm">{i.like_count}</span>
       </button>
     </li>
   );
@@ -197,51 +197,33 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   return (
     <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6">
       {/* ── 検索バー ─────────────────── */}
-      <div className="flex flex-wrap gap-2 bg-white p-4 rounded border text-black">
+      <div className="flex flex-col sm:flex-row gap-2 bg-white p-4 rounded border text-black">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="キーワード検索"
           className="w-full border rounded px-3 py-2 bg-white"
         />
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as FilterType)}
-          className="border rounded px-2 py-2 bg-white"
-        >
-          <option value="">全部</option>
-          <option value="positive">うれしい</option>
-          <option value="negative">いやだ</option>
-        </select>
-        <button
-          onClick={runSearch}
-          className="bg-fuchsia-700 hover:bg-fuchsia-800 text-white px-4 py-2 rounded"
-        >
-          検索
-        </button>
-      </div>
-
-      {/* ── 見出し行（Happy / Bad）──────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-lg mb-2">
-        {/* Happy */}
-        <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border text-black">
-          <span className="text-red-700">❤️</span>
-          Happy
-          <span className="text-sm font-normal text-gray-600 ml-1 text-black">
-            (いいね順)
-          </span>
-        </div>
-
-        {/* Bad */}
-        <div className="inline-flex items-center gap-2 font-bold bg-white p-2 rounded border text-black">
-          <span className="text-blue-700">💙</span>
-          Bad
-          <span className="text-sm font-normal text-gray-600 ml-1">
-            (いいね順)
-          </span>
+        <div className="flex gap-2">
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value as FilterType)}
+            className="border rounded px-2 py-2 bg-white flex-1"
+          >
+            <option value="">全部</option>
+            <option value="positive">うれしい</option>
+            <option value="negative">いやだ</option>
+          </select>
+          <button
+            onClick={runSearch}
+            className="bg-fuchsia-700 hover:bg-fuchsia-800 text-white px-4 py-2 rounded whitespace-nowrap"
+          >
+            検索
+          </button>
         </div>
       </div>
 
+      
       {/* ── 検索結果 ─────────────────── */}
       {loading ? (
         <p className="text-center text-black pt-8">読み込み中…</p>
@@ -249,8 +231,26 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         <p className="text-black text-center pt-8">該当する項目がありません</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <ul className="space-y-4">{items.happy.map(renderCard)}</ul>
-          <ul className="space-y-4">{items.bad.map(renderCard)}</ul>
+          {/* Happyセクション - ネガティブフィルター時は非表示 */}
+          {type !== "negative" && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-black sm:hidden flex items-center gap-2 bg-white p-3 rounded-lg border shadow-sm">
+                <span className="text-2xl">❤️</span>
+                Happy
+              </h2>
+              <ul className="space-y-4">{items.happy.map(renderCard)}</ul>
+            </div>
+          )}
+          {/* Badセクション - ポジティブフィルター時は非表示 */}
+          {type !== "positive" && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-black sm:hidden flex items-center gap-2 bg-white p-3 rounded-lg border shadow-sm">
+                <span className="text-2xl">💙</span>
+                Bad
+              </h2>
+              <ul className="space-y-4">{items.bad.map(renderCard)}</ul>
+            </div>
+          )}
         </div>
       )}
     </section>
