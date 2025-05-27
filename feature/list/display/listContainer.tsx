@@ -15,7 +15,7 @@ type ActionItem = {
 type ItemType = {
   id: number;
   name: string;
-  point: number;
+  point: number; // このpointは常に正の値なので、表示用として残す
   type: "like" | "sad";
   category: string;
   originalHappinessChange: number; // 元の符号付きポイント保持用
@@ -25,7 +25,9 @@ const ListContainer: React.FC = () => {
   const [items, setItems] = useState<ItemType[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [actionName, setActionName] = useState("");
+  // happinessChange をスライダーの直接の値として使用 (-100 から 100)
   const [happinessChange, setHappinessChange] = useState<number | null>(null);
+
   const [isShowingPartnerList, setIsShowingPartnerList] = useState(false);
   const [myUid, setMyUid] = useState<string | null>(null);
   const [partnerUid, setPartnerUid] = useState<string | null>(null);
@@ -33,6 +35,15 @@ const ListContainer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [confirmingItem, setConfirmingItem] = useState<ItemType | null>(null);
+
+  // コンポーネントロード時やフォーム表示時の初期化
+  useEffect(() => {
+    if (happinessChange === null) {
+      // フォーム表示時の初期値として、例えば1を設定（0は登録不可のため）
+      setHappinessChange(1);
+    }
+  }, [happinessChange]);
+
 
   const fetchUids = async () => {
     try {
@@ -133,6 +144,7 @@ const ListContainer: React.FC = () => {
   const startEdit = (item: ItemType) => {
     setEditingItemId(item.id);
     setActionName(item.name);
+    // 編集時は既存の happiness_change をそのまま設定
     setHappinessChange(item.originalHappinessChange);
     setShowForm(true);
   };
@@ -141,7 +153,7 @@ const ListContainer: React.FC = () => {
     setShowForm(false);
     setEditingItemId(null);
     setActionName("");
-    setHappinessChange(null);
+    setHappinessChange(1); // フォームを閉じるときはデフォルト値（0以外）にリセット
   };
 
   const handleConfirmYes = async () => {
@@ -178,8 +190,20 @@ const ListContainer: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!actionName || happinessChange === null || isNaN(happinessChange) || myUid === null || loading) {
+    if (
+      !actionName ||
+      happinessChange === null ||
+      isNaN(happinessChange) ||
+      myUid === null ||
+      loading
+    ) {
       alert("名前とポイントの両方を入力してください。");
+      return;
+    }
+
+    // ポイントが0の場合は登録不可とするバリデーション
+    if (happinessChange === 0) {
+      alert("ポイントは0以外の値に設定してください。");
       return;
     }
 
@@ -191,7 +215,7 @@ const ListContainer: React.FC = () => {
           .from("Action")
           .update({
             action_name: actionName,
-            happiness_change: happinessChange,
+            happiness_change: happinessChange, // スライダーの値を直接使用
           })
           .eq("aid", editingItemId);
 
@@ -207,7 +231,7 @@ const ListContainer: React.FC = () => {
             {
               uid: myUid,
               action_name: actionName,
-              happiness_change: happinessChange,
+              happiness_change: happinessChange, // スライダーの値を直接使用
             },
           ])
           .select()
@@ -226,12 +250,14 @@ const ListContainer: React.FC = () => {
 
         const timestamp = new Date().toISOString();
 
-        const { error: calendarError } = await supabase.from("Calendar").insert([
-          {
-            aid: insertedAction.aid,
-            timestamp,
-          },
-        ]);
+        const { error: calendarError } = await supabase
+          .from("Calendar")
+          .insert([
+            {
+              aid: insertedAction.aid,
+              timestamp,
+            },
+          ]);
 
         if (calendarError) {
           console.error("Calendar登録エラー:", calendarError);
@@ -246,6 +272,46 @@ const ListContainer: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // スライダーのグラデーションを計算する関数
+  // 値 (value) に応じてグラデーションのパーセンテージを調整
+  const getSliderBackground = (value: number | null) => {
+    if (value === null) return "linear-gradient(to right, #4169E1, #FF69B4)"; // デフォルト
+    
+    // -100から100の範囲を0-100%に正規化
+    const normalizedValue = (value + 100) / 2; // 0-100の範囲
+
+    // ピンク（赤）が負の領域に食い込むように色停止点を調整
+    // 例: -100 (青) -> 0 (中間) -> 100 (赤/ピンク)
+    // 0点を基準に、左にピンクを少し広げ、右にもピンクを広げる
+    // ここでは、全体の40%までが青系、そこからピンク系に変わるようなイメージ
+    const blueEnd = 40; // 青が終了する正規化されたパーセンテージ
+    const pinkStart = 60; // ピンクが開始する正規化されたパーセンテージ
+
+    // 値に基づいてグラデーションの位置を動的に調整
+    // これは簡易的な例です。より複雑なグラデーションには詳細な計算が必要です。
+    // 青 (低ポイント) -> 中間色 (0付近) -> ピンク/赤 (高ポイント)
+    // 便宜上、0点を50%として、その左右で色を調整します。
+    // 0 (中央) で色が完全に切り替わるのではなく、食い込ませるために、
+    // 0より少し左からピンクが始まり、0より少し右まで青がある、といったイメージで
+    const blueColor = "#4169E1"; // ロイヤルブルー
+    const lightBlue = "#ADD8E6"; // ライトブルー
+    const lightPink = "#FFC0CB"; // ライトピンク
+    const redColor = "#FF6347"; // トマトレッド (ピンクより強めにしたい場合)
+
+    // スライダーの背景グラデーションを動的に生成
+    // valueが負の時は青が優勢、正の時は赤/ピンクが優勢
+    // 0%が-100、50%が0、100%が100と仮定
+    const blueStop = Math.max(0, 50 - value * 0.5); // value=100で0%, value=-100で100%
+    const pinkStop = Math.min(100, 50 - value * 0.5); // value=100で0%, value=-100で100%
+
+    // 負の領域で青が強く、正の領域でピンク/赤が強いグラデーション
+    // 0付近で色が混ざる、または薄い中間色になるように調整
+    return `linear-gradient(to right, ${blueColor}, ${lightBlue} 40%, ${lightPink} 60%, ${redColor})`;
+    // または、もっと積極的にピンクを左に侵食させる場合 (例: -20%からピンクを開始)
+    // return `linear-gradient(to right, ${blueColor} 0%, ${lightBlue} 30%, ${lightPink} 50%, ${redColor} 70%, ${redColor} 100%)`;
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen w-full relative">
@@ -301,46 +367,30 @@ const ListContainer: React.FC = () => {
             className="border p-2 rounded w-full mb-4 text-black"
           />
 
-          <label className="block text-sm font-semibold mb-2 text-black">感情の種類</label>
-          <div className="flex gap-4 mb-4">
-            <button
-              className={`flex-1 border rounded p-2 text-center font-semibold transition duration-150 ${
-                happinessChange !== null && happinessChange >= 0 ? "bg-red-500 text-white border-red-700" : "bg-white text-red-500 border-red-500"
-              }`}
-              onClick={() => setHappinessChange(1)}
-              type="button"
-            >
-              嬉しい
-            </button>
-            <button
-              className={`flex-1 border rounded p-2 text-center font-semibold transition duration-150 ${
-                happinessChange !== null && happinessChange < 0 ? "bg-blue-500 text-white border-blue-700" : "bg-white text-blue-500 border-blue-500"
-              }`}
-              onClick={() => setHappinessChange(-1)}
-              type="button"
-            >
-              悲しい
-            </button>
+          {/* 感情の種類ボタンを削除しました */}
+
+          {/* ポイント表示を大きく */}
+          <label className="block text-xl font-bold mb-1 text-black">幸福度の変化: {happinessChange}</label>
+          <input
+            type="range" // typeをrangeに変更
+            min="-100"   // 最小値
+            max="100"    // 最大値
+            step="1"     // 1刻み
+            value={happinessChange !== null ? happinessChange : 0} // nullの場合のデフォルト値
+            onChange={(e) => setHappinessChange(Number(e.target.value))} // スライダーの値を直接 happinessChange に設定
+            className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+            style={{
+              background: getSliderBackground(happinessChange), // グラデーションを動的に適用
+            }}
+          />
+          {/* スライダーの0点の表示 */}
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>-100</span>
+            <span className={happinessChange === 0 ? "font-bold text-red-500" : ""}>0</span> {/* 0の場合強調 */}
+            <span>+100</span>
           </div>
 
-          <label className="block text-sm font-semibold mb-1 text-black">ポイント</label>
-          <input
-            type="number"
-            value={typeof happinessChange === "number" ? Math.abs(happinessChange) : ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === "") {
-                setHappinessChange(null);
-              } else {
-                const num = Number(val);
-                setHappinessChange(typeof happinessChange === "number" && happinessChange < 0 ? -num : num);
-              }
-            }}
-            className="border p-2 rounded w-full mb-4 text-black"
-            min={0}
-          />
-
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-end gap-4 mt-4"> {/* スライダーとの間に余白を追加 */}
             <button
               onClick={cancelForm}
               className="px-6 py-2 rounded bg-gray-400 text-white font-semibold hover:bg-gray-500"
@@ -445,7 +495,7 @@ const ListContainer: React.FC = () => {
           onClick={() => {
             setEditingItemId(null);
             setActionName("");
-            setHappinessChange(null);
+            setHappinessChange(1); // 新規追加時はスライダーをデフォルト値（1）に設定
             setShowForm(true);
           }}
           className="fixed bottom-20 right-6 w-16 h-16 rounded-full bg-purple-500 text-white text-4xl flex items-center justify-center shadow-lg hover:bg-purple-600 z-50"
