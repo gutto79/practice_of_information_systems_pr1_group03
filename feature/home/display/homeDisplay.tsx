@@ -10,9 +10,7 @@ import VideoPlayer from "../components/VideoPlayer";
 import { styles } from "../utils/utils";
 import { useHomeData } from "../hooks/useHomeData";
 import { useMovie } from "../hooks/useMovie";
-/**
- * ホーム画面表示コンポーネント
- */
+
 const HomeDisplay: React.FC = () => {
   const {
     hasPartner,
@@ -41,7 +39,8 @@ const HomeDisplay: React.FC = () => {
     showTimeModal,
     selectedTimeRange,
     handleSelectTimeRange,
-    handleGenerateMovie,
+    // 本番用　handleGenerateMovie,
+    handleGetMovie,
     setShowTimeModal,
     videoUrl,
     setVideoUrl,
@@ -58,7 +57,6 @@ const HomeDisplay: React.FC = () => {
     );
   }
 
-  // パートナーがいない場合の表示
   if (!hasPartner) {
     return (
       <>
@@ -81,10 +79,8 @@ const HomeDisplay: React.FC = () => {
     );
   }
 
-  // パートナーがいる場合の表示
   return (
     <div className="relative p-6 h-screen">
-      {/* 自分の幸福度（右上角） */}
       <div className="absolute top-4 right-4">
         <UserStatus
           happiness={userHappiness}
@@ -109,7 +105,6 @@ const HomeDisplay: React.FC = () => {
         </div>
       </div>
 
-      {/* スライドショー生成ボタン */}
       {/* スライドショー生成ボタン */}
       <div className="fixed top-20 left-4">
         <button
@@ -176,7 +171,8 @@ const HomeDisplay: React.FC = () => {
         onClose={() => setShowTimeModal(false)}
         selectedRange={selectedTimeRange}
         onSelectRange={handleSelectTimeRange}
-        onGenerate={handleGenerateMovie}
+        onGenerate={handleGetMovie}
+        //onGenerate={handleGenerateMovie}
         disabled={movieLoading}
       />
 

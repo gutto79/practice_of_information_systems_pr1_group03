@@ -290,9 +290,6 @@ const ListContainer: React.FC = () => {
       return "linear-gradient(to right, #4169E1, #FFC0CB 50%, #FF6347)";
     }
 
-    // -100から100の範囲を0-100%に正規化
-    const normalizedValue = (value + 100) / 2; // 0-100の範囲
-
     // 色の定義
     const blueColor = "#4169E1"; // ロイヤルブルー
     const lightBlue = "#ADD8E6"; // ライトブルー
