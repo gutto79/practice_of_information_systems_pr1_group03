@@ -38,7 +38,7 @@ export const PopUp = ({ isOpen, onClose, children }: PopUpProps) => {
             </div>
 
             {/* コンテンツエリア */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
+            <div className="flex-1 overflow-y-auto px-3 pb-3 md:px-6 md:pb-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
               <div className="min-h-0">{children}</div>
             </div>
           </div>

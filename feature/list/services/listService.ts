@@ -244,3 +244,57 @@ export const addToCalendar = async (
     return false;
   }
 };
+
+/**
+ * ユーザー情報を取得する
+ * @param userId ユーザーID
+ * @returns ユーザー情報
+ */
+export const getUserInfo = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("User")
+      .select("*")
+      .eq("uid", userId)
+      .single();
+
+    if (error) {
+      console.error("ユーザー情報取得エラー:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("getUserInfo エラー:", error);
+    return null;
+  }
+};
+
+/**
+ * 自分とパートナーの名前を取得する
+ * @param userId 自分のユーザーID
+ * @returns 自分とパートナーの名前
+ */
+export const getUserNames = async (userId: string) => {
+  try {
+    // 自分の情報を取得
+    const myInfo = await getUserInfo(userId);
+
+    // パートナーのIDを取得
+    const partnerId = await getCoupleRelationship(userId);
+
+    // パートナーの情報を取得
+    const partnerInfo = partnerId ? await getUserInfo(partnerId) : null;
+
+    return {
+      myName: myInfo?.name || "あなた",
+      partnerName: partnerInfo?.name || "パートナー",
+    };
+  } catch (error) {
+    console.error("getUserNames エラー:", error);
+    return {
+      myName: "あなた",
+      partnerName: "パートナー",
+    };
+  }
+};

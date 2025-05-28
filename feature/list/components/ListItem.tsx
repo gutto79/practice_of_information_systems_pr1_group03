@@ -20,16 +20,16 @@ const ListItem: React.FC<ListItemProps> = ({
   onConfirm,
 }) => {
   return (
-    <li className="flex justify-between items-center py-3 px-4 bg-white text-black rounded-lg shadow-sm">
+    <li className="flex justify-between items-center py-2 px-3 bg-white text-black rounded-lg shadow-sm">
       {!isShowingPartnerList && (
         <button
           onClick={() => onEdit(item)}
-          className="mr-3 text-black hover:text-gray-700"
+          className="mr-2 text-black hover:text-gray-700"
           aria-label={`編集: ${item.name}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8"
+            className="h-6 w-6"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -52,11 +52,11 @@ const ListItem: React.FC<ListItemProps> = ({
           }
         }}
       >
-        <span className="text-2xl azuki-font">{item.name}</span>
+        <span className="text-lg azuki-font">{item.name}</span>
       </div>
 
       <span
-        className={`font-bold text-4xl ${
+        className={`font-bold text-3xl ${
           item.type === "like"
             ? "text-pink-500 text-outline-white"
             : "text-blue-600 text-outline-white"

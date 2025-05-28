@@ -25,6 +25,8 @@ interface UseListReturn {
   loading: boolean;
   editingItemId: number | null;
   confirmingItem: ItemType | null;
+  myName: string;
+  partnerName: string;
 
   setActionName: (name: string) => void;
   setHappinessChange: (value: number | null) => void;
@@ -36,7 +38,11 @@ interface UseListReturn {
 
   startEdit: (item: ItemType) => void;
   cancelForm: () => void;
-  handleConfirmYes: () => Promise<void>;
+  handleConfirmYes: () => Promise<{
+    happinessChange: number;
+    itemName: string;
+    newHappiness: number;
+  } | null>;
   handleSubmit: () => Promise<void>;
 }
 
@@ -54,6 +60,8 @@ export const useList = (): UseListReturn => {
   const [loading, setLoading] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [confirmingItem, setConfirmingItem] = useState<ItemType | null>(null);
+  const [myName, setMyName] = useState("あなた");
+  const [partnerName, setPartnerName] = useState("パートナー");
 
   const { uid } = useAuth();
 
@@ -72,13 +80,27 @@ export const useList = (): UseListReturn => {
     }
   }, [uid]);
 
-  // myUidが変更されたらパートナーのuidを取得
+  // myUidが変更されたらパートナーのuidと名前を取得
   useEffect(() => {
     const fetchPartnerUid = async () => {
       if (!myUid) return;
 
+      console.log("Fetching partner info for myUid:", myUid);
       const partner = await listService.getCoupleRelationship(myUid);
+      console.log("Partner UID:", partner);
       setPartnerUid(partner);
+
+      try {
+        // 名前を取得
+        const names = await listService.getUserNames(myUid);
+        console.log("Fetched names:", names);
+        setMyName(names.myName || "あなた");
+        setPartnerName(names.partnerName || "パートナー");
+      } catch (error) {
+        console.error("Error fetching names:", error);
+        setMyName("あなた");
+        setPartnerName("パートナー");
+      }
     };
 
     fetchPartnerUid();
@@ -114,14 +136,14 @@ export const useList = (): UseListReturn => {
 
   // 確認ダイアログでYesを選択
   const handleConfirmYes = async () => {
-    if (!confirmingItem || !myUid) return;
+    if (!confirmingItem || !myUid) return null;
 
     try {
       // ユーザーの現在の幸福度を取得
       const currentHappiness = await listService.getUserHappiness(myUid);
 
       if (currentHappiness === null) {
-        return;
+        return null;
       }
 
       // 新しい幸福度を計算
@@ -137,8 +159,16 @@ export const useList = (): UseListReturn => {
       await listService.updateUserHappiness(myUid, newHappiness);
 
       setConfirmingItem(null);
+
+      // 幸福度の変化情報を返す
+      return {
+        happinessChange: confirmingItem.originalHappinessChange,
+        itemName: confirmingItem.name,
+        newHappiness: newHappiness,
+      };
     } catch (error) {
       console.error("handleConfirmYes エラー:", error);
+      return null;
     }
   };
 
@@ -221,6 +251,8 @@ export const useList = (): UseListReturn => {
     loading,
     editingItemId,
     confirmingItem,
+    myName,
+    partnerName,
 
     setActionName,
     setHappinessChange,

@@ -15,15 +15,15 @@ const ListTypeSelector: React.FC<ListTypeSelectorProps> = ({
   onSelectType,
 }) => {
   return (
-    <div className="flex justify-center items-start mt-4 mb-8">
-      <div className="flex flex-row gap-4">
+    <div className="flex justify-center items-start mt-4 mb-4">
+      <div className="flex flex-row gap-3">
         {[
-          { key: "like", label: ["嬉しいこと", "リスト"] },
-          { key: "sad", label: ["悲しいこと", "リスト"] },
+          { key: "like", label: ["嬉しい"] },
+          { key: "sad", label: ["悲しい"] },
         ].map((item) => (
           <button
             key={item.key}
-            className={`text-3xl px-8 py-8 rounded font-semibold azuki-font min-w-[220px] min-h-[100px] ${
+            className={`text-xl px-6 py-3 rounded font-semibold azuki-font min-w-[120px] min-h-[48px] ${
               // listTypeに応じて背景色と文字色を動的に変更
               listType === item.key
                 ? item.key === "like"

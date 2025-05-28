@@ -53,19 +53,16 @@ const ListForm: React.FC<ListFormProps> = ({
 }) => {
   return (
     <div>
-      <label className="block text-sm font-semibold mb-1 text-black azuki-font">
-        出来事
-      </label>
       <input
         type="text"
-        placeholder="名前"
+        placeholder="出来事の名前"
         value={actionName}
         onChange={(e) => onActionNameChange(e.target.value)}
-        className="border p-2 rounded w-full mb-4 text-black"
+        className="border p-3 rounded w-full mb-6 text-black text-lg"
       />
 
       {/* ポイント表示を大きく */}
-      <label className="block text-3xl font-bold mb-3 text-black">
+      <label className="block text-2xl font-bold mb-4 text-center text-black">
         幸福度の変化: {happinessChange}
       </label>
       <input
@@ -75,22 +72,21 @@ const ListForm: React.FC<ListFormProps> = ({
         step="1" // 1刻み
         value={happinessChange !== null ? happinessChange : 0} // nullの場合のデフォルト値
         onChange={(e) => onHappinessChange(Number(e.target.value))} // スライダーの値を直接 happinessChange に設定
-        className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+        className="w-full h-4 rounded-lg appearance-none cursor-pointer mb-2"
         style={{
           background: getSliderBackground(happinessChange), // グラデーションを動的に適用
         }}
       />
       {/* スライダーの0点の表示 */}
-      <div className="flex justify-between text-xs text-gray-500">
-        <span>-100</span>
+      <div className="flex justify-between text-sm text-gray-500 mb-6">
+        <span className="font-bold">-100</span>
         <span className={happinessChange === 0 ? "font-bold text-red-500" : ""}>
           0
-        </span>{" "}
-        {/* 0の場合強調 */}
-        <span>+100</span>
+        </span>
+        <span className="font-bold">+100</span>
       </div>
 
-      <div className="flex justify-end gap-4 mt-4">
+      <div className="flex justify-center gap-6 mt-6">
         <button
           onClick={onCancel}
           className="px-6 py-2 rounded bg-gray-400 text-white font-semibold hover:bg-gray-500"

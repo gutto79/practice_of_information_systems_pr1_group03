@@ -202,3 +202,4 @@ const UserStatus: React.FC<UserStatusProps> = ({
 };
 
 export default UserStatus;
+export { HeartContainer, calculateGradientColors };
