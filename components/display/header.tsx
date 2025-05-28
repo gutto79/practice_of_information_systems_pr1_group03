@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 import supabase from "@/lib/supabase";
-import { useAuth } from "@/components/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import LogoutButton from "@/components/LogoutButton";
-import { useRouter } from "next/navigation";
+import LogoutButton from "@/components/buttons/LogoutButton";
 
 // 確認モーダルコンポーネント
 const ConfirmModal: React.FC<{
@@ -48,7 +47,6 @@ const ConfirmModal: React.FC<{
 
 export default function Header() {
   const { uid, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [gender, setGender] = useState("");
@@ -93,7 +91,9 @@ export default function Header() {
 
         if (coupleData) {
           setHasPartner(true);
-          setPartnerId(coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1);
+          setPartnerId(
+            coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1
+          );
         } else {
           setHasPartner(false);
           setPartnerId(null);
@@ -164,7 +164,14 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-50 w-full bg-fuchsia-700 border-b border-fuchsia-800 shadow-sm">
         <div className="container flex items-center justify-center h-16 px-4 mx-auto relative">
-          {/*<h1 className="text-2xl font-bold text-white azuki-font">幸福度可視化</h1>*/}
+          <h1 className="text-3xl font-bold azuki-font px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 shadow-lg border border-white/30">
+            <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)] relative">
+              <span className="absolute inset-0 bg-white/30 blur-sm opacity-70 animate-pulse rounded-full"></span>
+              HapiViz
+            </span>
+          </h1>
+
+          {/* ヘッダーからステータス表示を削除 */}
 
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <div className="absolute right-4">
@@ -195,11 +202,16 @@ export default function Header() {
             </div>
             <PopoverContent className="w-72 bg-white" align="end">
               <div className="grid gap-4">
-                <div className="font-medium text-lg text-black">ユーザー設定</div>
+                <div className="font-medium text-lg text-black">
+                  ユーザー設定
+                </div>
 
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <label htmlFor="username" className="text-sm font-medium text-black">
+                    <label
+                      htmlFor="username"
+                      className="text-sm font-medium text-black"
+                    >
                       ユーザー名
                     </label>
                     <input
@@ -213,7 +225,9 @@ export default function Header() {
                   </div>
 
                   <div className="space-y-2 text-black">
-                    <label className="text-sm font-medium text-black">性別</label>
+                    <label className="text-sm font-medium text-black">
+                      性別
+                    </label>
                     <div className="flex gap-4">
                       <label className="flex items-center gap-2">
                         <input

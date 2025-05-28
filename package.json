@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "api": "cd feature/movie_GenAI && PORT=8000 python3 api.py",
+    "api": "cd movie_GenAI && PORT=8000 python3 api.py",
     "dev:all": "concurrently \"npm run dev\" \"npm run api\"",
-    "setup:api": "cd feature/movie_GenAI && pip install -r requirements.txt"
+    "setup:api": "cd movie_GenAI && pip install -r requirements.txt"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.17",
@@ -27,6 +27,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
+    "framer-motion": "^12.15.0",
     "lucide-react": "^0.501.0",
     "next": "15.3.0",
     "react": "^19.0.0",

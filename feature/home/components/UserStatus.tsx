@@ -1,48 +1,58 @@
 import React, { useEffect, useState } from "react";
-import { getBorderColor, getBarColor } from "../utils/utils";
 
 // 添加颜色计算函数
 const calculateGradientColors = (happiness: number) => {
   // 定义起始颜色（蓝色）和结束颜色（洋红色）
   const startColor = {
-    r: 59,  // blue-500
+    r: 59, // blue-500
     g: 130,
-    b: 246
+    b: 246,
   };
   const endColor = {
     r: 236, // pink-500
     g: 72,
-    b: 153
+    b: 153,
   };
 
   // 计算当前幸福度对应的颜色
   const currentColor = {
-    r: Math.round(startColor.r + (endColor.r - startColor.r) * (happiness / 100)),
-    g: Math.round(startColor.g + (endColor.g - startColor.g) * (happiness / 100)),
-    b: Math.round(startColor.b + (endColor.b - startColor.b) * (happiness / 100))
+    r: Math.round(
+      startColor.r + (endColor.r - startColor.r) * (happiness / 100)
+    ),
+    g: Math.round(
+      startColor.g + (endColor.g - startColor.g) * (happiness / 100)
+    ),
+    b: Math.round(
+      startColor.b + (endColor.b - startColor.b) * (happiness / 100)
+    ),
   };
 
   return {
     start: `rgb(${currentColor.r}, ${currentColor.g}, ${currentColor.b})`,
-    end: `rgb(${Math.min(currentColor.r + 20, 255)}, ${Math.min(currentColor.g + 20, 255)}, ${Math.min(currentColor.b + 20, 255)})`
+    end: `rgb(${Math.min(currentColor.r + 20, 255)}, ${Math.min(
+      currentColor.g + 20,
+      255
+    )}, ${Math.min(currentColor.b + 20, 255)})`,
   };
 };
 
 interface UserStatusProps {
   happiness: number | null;
-  gender: string | null;
   name: string | null;
   isPartner?: boolean;
 }
 
-const HeartContainer: React.FC<{ 
-  happiness: number; 
-  gender: string | null;
+const HeartContainer: React.FC<{
+  happiness: number;
   size?: "small" | "large";
   animate?: boolean;
-}> = ({ happiness, gender, size = "large", animate = true }) => {
-  const [animatedHappiness, setAnimatedHappiness] = useState(animate ? 0 : happiness);
-  const [gradientColors, setGradientColors] = useState(calculateGradientColors(animate ? 0 : happiness));
+}> = ({ happiness, size = "large", animate = true }) => {
+  const [animatedHappiness, setAnimatedHappiness] = useState(
+    animate ? 0 : happiness
+  );
+  const [gradientColors, setGradientColors] = useState(
+    calculateGradientColors(animate ? 0 : happiness)
+  );
 
   useEffect(() => {
     if (!animate) {
@@ -62,11 +72,11 @@ const HeartContainer: React.FC<{
       const currentTime = Date.now();
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // 使用 easeOutQuad 缓动函数使动画更自然
       const easeProgress = 1 - (1 - progress) * (1 - progress);
       const currentHappiness = Math.round(targetHappiness * easeProgress);
-      
+
       setAnimatedHappiness(currentHappiness);
       // 更新渐变色
       setGradientColors(calculateGradientColors(currentHappiness));
@@ -91,7 +101,13 @@ const HeartContainer: React.FC<{
         style={{ filter: "drop-shadow(0 0 8px rgba(255,255,255,0.3))" }}
       >
         <defs>
-          <linearGradient id={`heartGradient-${size}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient
+            id={`heartGradient-${size}`}
+            x1="0%"
+            y1="0%"
+            x2="0%"
+            y2="100%"
+          >
             <stop offset="0%" style={{ stopColor: gradientColors.start }} />
             <stop offset="100%" style={{ stopColor: gradientColors.end }} />
           </linearGradient>
@@ -110,25 +126,27 @@ const HeartContainer: React.FC<{
           fill={`url(#heartGradient-${size})`}
           style={{
             clipPath: `inset(${100 - animatedHappiness}% 0 0 0)`,
-            transition: "clip-path 0.1s linear"
+            transition: "clip-path 0.1s linear",
           }}
         />
       </svg>
       {/* 幸福度数字 */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <span 
+        <span
           className={`${textSize} font-bold drop-shadow-lg`}
           style={{
             color: size === "large" ? gradientColors.start : "#ffffff",
-            ...(size === "large" ? {
-              textShadow: `
+            ...(size === "large"
+              ? {
+                  textShadow: `
                 -1px -1px 0 #fff,
                 1px -1px 0 #fff,
                 -1px 1px 0 #fff,
                 1px 1px 0 #fff,
                 0 0 4px rgba(255,255,255,0.5)
-              `
-            } : {})
+              `,
+                }
+              : {}),
           }}
         >
           {animatedHappiness}
@@ -143,7 +161,6 @@ const HeartContainer: React.FC<{
  */
 const UserStatus: React.FC<UserStatusProps> = ({
   happiness,
-  gender,
   name,
   isPartner = false,
 }) => {
@@ -151,13 +168,12 @@ const UserStatus: React.FC<UserStatusProps> = ({
     return (
       <div className="w-full max-w-xs">
         <div className="text-white mb-4 text-3xl text-center azuki-font">
-          {`${name || "相手"}の幸福度`}
+          {`${name || "相手"}`}幸福度
         </div>
         <div className="flex justify-center">
-          <HeartContainer 
-            happiness={happiness ?? 0} 
-            gender={gender} 
-            size="large" 
+          <HeartContainer
+            happiness={happiness ?? 0}
+            size="large"
             animate={true}
           />
         </div>
@@ -168,17 +184,13 @@ const UserStatus: React.FC<UserStatusProps> = ({
   // 右上角的小心形（不显示动画）
   return (
     <div className="w-24">
-      <div className="text-white mb-1 text-sm text-right azuki-font">
-        {`${name || "自分"}の幸福度`}
+      <div className="text-white mb-1 text-sm text-center azuki-font">
+        {`${name || "自分"}`}
       </div>
-      <HeartContainer 
-        happiness={happiness ?? 0} 
-        gender={gender} 
-        size="small" 
-        animate={false}
-      />
+      <HeartContainer happiness={happiness ?? 0} size="small" animate={false} />
     </div>
   );
 };
 
 export default UserStatus;
+export { HeartContainer, calculateGradientColors };

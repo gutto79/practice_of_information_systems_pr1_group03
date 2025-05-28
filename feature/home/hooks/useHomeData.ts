@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { HomeState, Invite, TimeRange } from "../types/types";
+import { HomeState, Invite } from "../types/types";
 import * as homeService from "../services/homeService";
-
+import { useAuth } from "@/hooks/useAuth";
 /**
  * ホーム画面のデータと機能を管理するカスタムフック
  */
@@ -23,15 +23,13 @@ export const useHomeData = () => {
     userName: null,
     partnerName: null,
     recentActions: [],
-    showTimeModal: false,
-    selectedTimeRange: "1日",
     showBreakupModal: false,
     showToast: false,
     toastMessage: "",
-    videoUrl: null,
   });
 
   const router = useRouter();
+  const { uid } = useAuth();
 
   // 状態を更新する関数
   const updateState = (newState: Partial<HomeState>) => {
@@ -47,36 +45,19 @@ export const useHomeData = () => {
     setTimeout(() => updateState({ showToast: false }), 2000);
   };
 
-  // 認証チェック
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data } = await homeService.getCurrentUser();
-        if (!data.user) {
-          router.push("/");
-        }
-      } catch (error) {
-        console.error("認証チェックエラー:", error);
-        router.push("/");
-      }
-    };
-    checkAuth();
-  }, [router]);
-
   // ユーザーデータの取得
   useEffect(() => {
     const fetchUserData = async () => {
-      try {
-        // 現在のユーザー取得
-        const { data } = await homeService.getCurrentUser();
-        if (!data.user) {
-          throw new Error("ユーザーが見つかりません");
-        }
+      if (!uid) {
+        updateState({ loading: false });
+        return;
+      }
 
-        updateState({ user: { id: data.user.id } });
+      try {
+        updateState({ loading: true, user: { id: uid } });
 
         // ユーザー詳細情報取得
-        const userData = await homeService.getUserDetails(data.user.id);
+        const userData = await homeService.getUserDetails(uid as string);
         updateState({
           userHappiness: userData.happiness,
           userGender: userData.gender,
@@ -85,15 +66,13 @@ export const useHomeData = () => {
 
         // カップル関係確認
         const coupleData = await homeService.getCoupleRelationship(
-          data.user.id
+          uid as string
         );
 
         if (coupleData) {
           // パートナーIDの特定
           const partnerId =
-            coupleData.uid1 === data.user.id
-              ? coupleData.uid2
-              : coupleData.uid1;
+            coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1;
 
           // パートナー情報取得
           const partnerData = await homeService.getUserDetails(partnerId);
@@ -116,17 +95,17 @@ export const useHomeData = () => {
         }
 
         // 最近のアクション取得
-        const recentActions = await homeService.getRecentActions(data.user.id);
+        const recentActions = await homeService.getRecentActions(uid as string);
         updateState({ recentActions });
 
         // 受け取った招待取得
         const pendingInvites = await homeService.getPendingInvites(
-          data.user.id
+          uid as string
         );
         updateState({ pendingInvites });
 
         // 送信した招待取得
-        const sentInvites = await homeService.getSentInvites(data.user.id);
+        const sentInvites = await homeService.getSentInvites(uid as string);
         updateState({ sentInvites });
       } catch (error) {
         console.error("データ取得エラー:", error);
@@ -137,7 +116,7 @@ export const useHomeData = () => {
     };
 
     fetchUserData();
-  }, [router]);
+  }, [uid, router]);
 
   // 招待送信
   const handleSendInvite = async (inviteId: string) => {
@@ -251,76 +230,6 @@ export const useHomeData = () => {
     }
   };
 
-  // 時間範囲選択
-  const handleSelectTimeRange = (range: TimeRange) => {
-    updateState({ selectedTimeRange: range });
-  };
-
-  interface MovieResponse {
-    success: boolean;
-    message: string;
-    note?: string;
-    video_url?: string;
-  }
-
-  // 動画生成
-  const handleGenerateMovie = async () => {
-    try {
-      showToastMessage("動画生成中...");
-
-      // 日数設定
-      let days = 1;
-      if (state.selectedTimeRange === "1週間") {
-        days = 7;
-      } else if (state.selectedTimeRange === "1ヶ月") {
-        days = 30;
-      }
-      //開発段階では動画生成を行わない
-      //const responseData = await homeService.generateMovie(
-      //  state.user?.id as string,
-      //  days
-      //);
-
-      const responseData = await homeService.getMovie() as MovieResponse;
-
-      // 開発モードの場合は注意書きを表示
-      if (responseData.note) {
-        showToastMessage(responseData.message);
-        // 3秒後に注意書きを表示
-        setTimeout(() => {
-          showToastMessage(responseData.note || "");
-        }, 3000);
-      } else {
-        showToastMessage("動画が生成されました！");
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        showToastMessage(error.message);
-      } else {
-        showToastMessage("動画生成に失敗しました");
-      }
-    }
-  };
-
-  // 動画取得
-  const handleGetMovie = async () => {
-    try {
-      const response = await homeService.getMovie();
-      if (response.video_url) {
-        updateState({ videoUrl: response.video_url });
-        showToastMessage("動画を取得しました！");
-      } else {
-        throw new Error("動画のURLを取得できませんでした");
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        showToastMessage(error.message);
-      } else {
-        showToastMessage("動画の取得に失敗しました");
-      }
-    }
-  };
-
   return {
     ...state,
     showToastMessage,
@@ -330,13 +239,8 @@ export const useHomeData = () => {
     handleDeclineInvite,
     handleDeleteInvite,
     handleBreakup,
-    handleSelectTimeRange,
-    handleGenerateMovie,
-    setShowTimeModal: (show: boolean) => updateState({ showTimeModal: show }),
     setShowBreakupModal: (show: boolean) =>
       updateState({ showBreakupModal: show }),
     setInviteId: (id: string) => updateState({ inviteId: id }),
-    handleGetMovie,
-    setVideoUrl: (url: string | null) => updateState({ videoUrl: url }),
   };
 };

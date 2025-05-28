@@ -3,10 +3,7 @@
   color: white;
 }
 
-/* ボタンに隙間を開ける */
-.fc-button-group {
-  padding-bottom: 0.5rem;
-}
+
 
 /* ボタンの色変える */
 .fc-button,
@@ -52,14 +49,9 @@
 
 /* カレンダーのボタン群を横並びにする */
 .fc-header-toolbar {
+  padding-top: 2.5rem;
   display: flex;
   flex-direction: column; /* 上下に分ける */
-  padding-top: 0.5rem;
-}
-
-/* カレンダーのタイトルを一番下にする */
-.fc-toolbar-chunk:has(.fc-toolbar-title) {
-  order: 2;
 }
 
 .fc-timeGridWeek-view {
