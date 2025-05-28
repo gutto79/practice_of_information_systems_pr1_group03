@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AnimatedBackground from "@/components/display/AnimatedBackground";
 import { MovieProvider } from "@/hooks/useMovieContext";
+import { PartnerProvider } from "@/hooks/usePartnerContext";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -43,9 +44,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <MovieProvider>
-          <AnimatedBackground>
-            <main className="min-h-screen">{children}</main>
-          </AnimatedBackground>
+          <PartnerProvider>
+            <AnimatedBackground>
+              <main className="min-h-screen">{children}</main>
+            </AnimatedBackground>
+          </PartnerProvider>
         </MovieProvider>
       </body>
     </html>
