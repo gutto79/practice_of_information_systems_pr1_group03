@@ -17,8 +17,16 @@ const RegisterDisplay: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      {/* ロゴを上部に大きく表示 */}
+      <h1 className="text-4xl font-bold azuki-font px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 shadow-lg border border-white/30 mb-8">
+        <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)] relative">
+          <span className="absolute inset-0 bg-white/30 blur-sm opacity-70 animate-pulse rounded-full"></span>
+          HapiViz
+        </span>
+      </h1>
+
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h1 className="mb-6 text-2xl font-bold text-center">ユーザー登録</h1>
+        <h2 className="mb-6 text-2xl font-bold text-center">ユーザー登録</h2>
 
         {error && (
           <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">

@@ -164,7 +164,12 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-50 w-full bg-fuchsia-700 border-b border-fuchsia-800 shadow-sm">
         <div className="container flex items-center justify-center h-16 px-4 mx-auto relative">
-          {/*<h1 className="text-2xl font-bold text-white azuki-font">幸福度可視化</h1>*/}
+          <h1 className="text-3xl font-bold azuki-font px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 shadow-lg border border-white/30">
+            <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)] relative">
+              <span className="absolute inset-0 bg-white/30 blur-sm opacity-70 animate-pulse rounded-full"></span>
+              HapiViz
+            </span>
+          </h1>
 
           {/* ヘッダーからステータス表示を削除 */}
 
