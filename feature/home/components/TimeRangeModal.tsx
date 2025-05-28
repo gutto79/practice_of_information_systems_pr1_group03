@@ -1,23 +1,17 @@
 import React from "react";
-import Modal from "./Modal";
 import { TimeRange } from "../types/types";
 
 interface TimeRangeModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   selectedRange: TimeRange;
   onSelectRange: (range: TimeRange) => void;
   onGenerate: () => Promise<void>;
   disabled?: boolean;
-  //onGetMovie: () => Promise<void>;
 }
 
 /**
- * 時間範囲選択モーダルコンポーネント
+ * 時間範囲選択コンポーネント
  */
 const TimeRangeModal: React.FC<TimeRangeModalProps> = ({
-  isOpen,
-  onClose,
   selectedRange,
   onSelectRange,
   onGenerate,
@@ -26,7 +20,7 @@ const TimeRangeModal: React.FC<TimeRangeModalProps> = ({
   const timeRanges: TimeRange[] = ["1日", "1週間", "1ヶ月"];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="時間範囲を選択">
+    <div>
       {/* 時間範囲選択ボタン */}
       <div className="flex justify-between mb-6">
         {timeRanges.map((range) => (
@@ -56,7 +50,7 @@ const TimeRangeModal: React.FC<TimeRangeModalProps> = ({
       >
         {disabled ? "生成中..." : "生成！"}
       </button>
-    </Modal>
+    </div>
   );
 };
 

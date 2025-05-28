@@ -1,7 +1,9 @@
 import FullCalendar from "@fullcalendar/react";
+import { EventClickArg } from "@fullcalendar/core";
 import { format } from "date-fns";
 import { createRef, useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useModal } from "@/hooks/useModal";
 import * as calendarService from "../services/calendarService";
 
 // イベントの型定義
@@ -19,7 +21,7 @@ interface CalendarEvent {
 }
 
 // 選択されたイベントの型定義
-interface SelectedEvent {
+export interface SelectedEvent {
   title: string;
   start: Date;
   extendedProps?: {
@@ -35,8 +37,11 @@ export const useCalendarFunc = () => {
   const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(
     null
   );
-  const [isOpen, setIsOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const { uid } = useAuth();
+
+  // モーダル用のフック
+  const eventDetailModal = useModal();
 
   // データを取得してカレンダーイベントとして設定
   useEffect(() => {
@@ -85,9 +90,19 @@ export const useCalendarFunc = () => {
     console.log("Selected date:", format(selectedInfo.start, "yyyy-MM-dd"));
   };
 
-  const handleEventClick = (info: { event: SelectedEvent }) => {
-    setSelectedEvent(info.event);
-    setIsOpen(true);
+  const handleEventClick = (info: EventClickArg) => {
+    // EventClickArgからSelectedEvent形式に変換
+    const event = {
+      title: info.event.title,
+      start: info.event.start as Date,
+      extendedProps: {
+        happiness_change: info.event.extendedProps?.happiness_change,
+        isPartner: info.event.extendedProps?.isPartner,
+        userName: info.event.extendedProps?.userName,
+      },
+    };
+    setSelectedEvent(event);
+    eventDetailModal.openModal();
   };
 
   return {
@@ -96,8 +111,9 @@ export const useCalendarFunc = () => {
     ourEvents,
     selectedEvent,
     setSelectedEvent,
-    setIsOpen,
-    isOpen,
+    selectedDate,
+    setSelectedDate,
+    eventDetailModal,
     handleEventClick,
   };
 };

@@ -7,11 +7,20 @@ import InviteForm from "../components/InviteForm";
 import TimeRangeModal from "../components/TimeRangeModal";
 import Toast from "../components/Toast";
 import VideoPlayer from "../components/VideoPlayer";
+import { PopUp } from "@/components/display/Popup";
 import { styles } from "../utils/utils";
 import { useHomeData } from "../hooks/useHomeData";
 import { useMovie } from "../hooks/useMovie";
+import { useModal } from "@/hooks/useModal";
 
+/**
+ * ホーム画面表示コンポーネント
+ */
 const HomeDisplay: React.FC = () => {
+  // モーダル状態管理
+  const timeRangeModal = useModal();
+  const videoPlayerModal = useModal();
+
   const {
     hasPartner,
     userHappiness,
@@ -36,18 +45,30 @@ const HomeDisplay: React.FC = () => {
   } = useHomeData();
 
   const {
-    showTimeModal,
     selectedTimeRange,
     handleSelectTimeRange,
     // 本番用　handleGenerateMovie,
     handleGetMovie,
-    setShowTimeModal,
     videoUrl,
     setVideoUrl,
     status,
     loading: movieLoading,
     clearError,
   } = useMovie();
+
+  // 動画プレーヤーを閉じる
+  const handleCloseVideoPlayer = () => {
+    setVideoUrl(null);
+    clearError();
+    videoPlayerModal.closeModal();
+  };
+
+  // 動画URLが設定されたらモーダルを開く
+  React.useEffect(() => {
+    if (videoUrl) {
+      videoPlayerModal.openModal();
+    }
+  }, [videoUrl]);
 
   if (user === null) {
     return (
@@ -108,7 +129,7 @@ const HomeDisplay: React.FC = () => {
       {/* スライドショー生成ボタン */}
       <div className="fixed top-20 left-4">
         <button
-          onClick={() => setShowTimeModal(true)}
+          onClick={timeRangeModal.openModal}
           className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 transition-colors text-white shadow-lg"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -166,15 +187,17 @@ const HomeDisplay: React.FC = () => {
       )}
 
       {/* 時間範囲選択モーダル */}
-      <TimeRangeModal
-        isOpen={showTimeModal}
-        onClose={() => setShowTimeModal(false)}
-        selectedRange={selectedTimeRange}
-        onSelectRange={handleSelectTimeRange}
-        onGenerate={handleGetMovie}
-        //onGenerate={handleGenerateMovie}
-        disabled={movieLoading}
-      />
+      <PopUp isOpen={timeRangeModal.isOpen} onClose={timeRangeModal.closeModal}>
+        <div className="p-6">
+          <h3 className="text-xl font-bold mb-4">スライドショー生成</h3>
+          <TimeRangeModal
+            selectedRange={selectedTimeRange}
+            onSelectRange={handleSelectTimeRange}
+            onGenerate={handleGetMovie}
+            disabled={movieLoading}
+          />
+        </div>
+      </PopUp>
 
       {/* トースト通知 */}
       <Toast
@@ -184,15 +207,12 @@ const HomeDisplay: React.FC = () => {
       />
 
       {/* 動画プレーヤー */}
-      {videoUrl && (
-        <VideoPlayer
-          videoUrl={videoUrl}
-          onClose={() => {
-            setVideoUrl(null);
-            clearError();
-          }}
-        />
-      )}
+      <PopUp isOpen={videoPlayerModal.isOpen} onClose={handleCloseVideoPlayer}>
+        <div className="p-6">
+          <h3 className="text-xl font-bold mb-4">スライドショー</h3>
+          {videoUrl && <VideoPlayer videoUrl={videoUrl} />}
+        </div>
+      </PopUp>
     </div>
   );
 };
