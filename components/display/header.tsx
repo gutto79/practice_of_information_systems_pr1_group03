@@ -166,6 +166,8 @@ export default function Header() {
         <div className="container flex items-center justify-center h-16 px-4 mx-auto relative">
           {/*<h1 className="text-2xl font-bold text-white azuki-font">幸福度可視化</h1>*/}
 
+          {/* ヘッダーからステータス表示を削除 */}
+
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <div className="absolute right-4">
               <PopoverTrigger asChild>

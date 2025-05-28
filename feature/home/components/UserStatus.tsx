@@ -184,8 +184,8 @@ const UserStatus: React.FC<UserStatusProps> = ({
   // 右上角的小心形（不显示动画）
   return (
     <div className="w-24">
-      <div className="text-white mb-1 text-sm text-right azuki-font">
-        {`${name || "自分"}の幸福度`}
+      <div className="text-white mb-1 text-sm text-center azuki-font">
+        {`${name || "自分"}`}
       </div>
       <HeartContainer happiness={happiness ?? 0} size="small" animate={false} />
     </div>

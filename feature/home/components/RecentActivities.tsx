@@ -11,8 +11,10 @@ interface RecentActivitiesProps {
  */
 const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions }) => {
   return (
-    <div className="mt-4 bg-white rounded-lg shadow p-4">
-      <h3 className="text-lg font-medium text-gray-700 mb-2 azuki-font">最近の活動</h3>
+    <div className="my-4 bg-white rounded-lg shadow p-4">
+      <h3 className="text-lg font-medium text-gray-700 mb-2 azuki-font">
+        最近の活動
+      </h3>
       <ul className="space-y-2">
         {actions.length > 0 ? (
           actions.map((action, index) => (
