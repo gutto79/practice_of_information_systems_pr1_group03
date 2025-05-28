@@ -10,7 +10,6 @@ export default function LogoutButton() {
     // セッションを破棄
     await supabase.auth.signOut();
 
-    // ページをリフレッシュしてミドルウェアに再評価させる
     router.refresh();
     router.push("/");
   };

@@ -180,8 +180,13 @@ const ListContainer: React.FC = () => {
         return;
       }
 
-      const newHappiness =
+      let newHappiness =
         userData.happiness + confirmingItem.originalHappinessChange;
+      if (newHappiness < 0) {
+        newHappiness = 0;
+      } else if (newHappiness > 100) {
+        newHappiness = 100;
+      }
 
       const { error: updateError } = await supabase
         .from("User")

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "@/lib/supabase";
-import { useAuth } from "@/components/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 const RegisterDisplay: React.FC = () => {
   const [name, setName] = useState("");

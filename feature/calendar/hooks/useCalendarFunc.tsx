@@ -2,7 +2,7 @@ import FullCalendar from "@fullcalendar/react";
 import { format } from "date-fns";
 import { createRef, useState, useEffect } from "react";
 import supabase from "@/lib/supabase";
-import { useAuth } from "@/components/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 // 型定義を追加
 interface User {
@@ -28,7 +28,7 @@ type ActionResponse = {
   happiness_change: number;
   Calendar: Calendar[];
   User: User;
-}
+};
 
 export const useCalendarFunc = () => {
   const [eventsTitle, setEventsTitle] = useState("");
@@ -49,31 +49,33 @@ export const useCalendarFunc = () => {
         console.log("No uid available");
         return;
       }
-      
+
       try {
         console.log("Fetching couple data for uid:", uid);
         // カップルテーブルから相手のuidを取得
         const { data: coupleData, error: coupleError } = await supabase
-          .from('Couple')
-          .select('uid1, uid2')
+          .from("Couple")
+          .select("uid1, uid2")
           .or(`uid1.eq.${uid},uid2.eq.${uid}`)
           .single();
 
         if (coupleError) {
-          console.error('Error fetching couple data:', coupleError);
+          console.error("Error fetching couple data:", coupleError);
           return;
         }
 
         console.log("Couple data:", coupleData);
 
         // 相手のuidを特定
-        const partnerUid = coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1;
+        const partnerUid =
+          coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1;
         console.log("Partner uid:", partnerUid);
 
         // 自分のイベントを取得
         const { data: myData, error: myError } = await supabase
-          .from('Action')
-          .select(`
+          .from("Action")
+          .select(
+            `
             aid,
             action_name,
             happiness_change,
@@ -84,11 +86,12 @@ export const useCalendarFunc = () => {
               name,
               gender
             )
-          `)
-          .eq('uid', uid);
+          `
+          )
+          .eq("uid", uid);
 
         if (myError) {
-          console.error('Error fetching my data:', myError);
+          console.error("Error fetching my data:", myError);
           return;
         }
 
@@ -96,8 +99,9 @@ export const useCalendarFunc = () => {
 
         // 相手のイベントを取得
         const { data: partnerData, error: partnerError } = await supabase
-          .from('Action')
-          .select(`
+          .from("Action")
+          .select(
+            `
             aid,
             action_name,
             happiness_change,
@@ -108,59 +112,68 @@ export const useCalendarFunc = () => {
               name,
               gender
             )
-          `)
-          .eq('uid', partnerUid);
+          `
+          )
+          .eq("uid", partnerUid);
 
         if (partnerError) {
-          console.error('Error fetching partner data:', partnerError);
+          console.error("Error fetching partner data:", partnerError);
           return;
         }
 
         console.log("Partner events data:", partnerData);
 
         // 自分のイベントをカレンダーイベントの形式に変換
-        const myEvents = (myData as unknown as ActionResponse[]).flatMap(item => {
-          console.log("Processing my event item:", item);
-          return item.Calendar.map(calendar => {
-            console.log("Calendar item:", calendar);
-            console.log("User data:", item.User);
-            return {
-              id: `${item.aid}-${calendar.timestamp}`,
-              title: item.action_name,
-              start: calendar.timestamp,
-              backgroundColor: item.User.gender === 'male' ? '#2196f3' : '#e53935',
-              borderColor: item.User.gender === 'male' ? '#2196f3' : '#e53935',
-              extendedProps: {
-                happiness_change: item.happiness_change,
-                isPartner: false,
-                userName: item.User.name
-              }
-            };
-          });
-        }).filter(event => event.start);
+        const myEvents = (myData as unknown as ActionResponse[])
+          .flatMap((item) => {
+            console.log("Processing my event item:", item);
+            return item.Calendar.map((calendar) => {
+              console.log("Calendar item:", calendar);
+              console.log("User data:", item.User);
+              return {
+                id: `${item.aid}-${calendar.timestamp}`,
+                title: item.action_name,
+                start: calendar.timestamp,
+                backgroundColor:
+                  item.User.gender === "male" ? "#2196f3" : "#e53935",
+                borderColor:
+                  item.User.gender === "male" ? "#2196f3" : "#e53935",
+                extendedProps: {
+                  happiness_change: item.happiness_change,
+                  isPartner: false,
+                  userName: item.User.name,
+                },
+              };
+            });
+          })
+          .filter((event) => event.start);
 
         console.log("Converted my events:", myEvents);
 
         // 相手のイベントをカレンダーイベントの形式に変換
-        const partnerEvents = (partnerData as unknown as ActionResponse[]).flatMap(item => {
-          console.log("Processing partner event item:", item);
-          return item.Calendar.map(calendar => {
-            console.log("Calendar item:", calendar);
-            console.log("User data:", item.User);
-            return {
-              id: `partner-${item.aid}-${calendar.timestamp}`,
-              title: item.action_name,
-              start: calendar.timestamp,
-              backgroundColor: item.User.gender === 'male' ? '#64b5f6' : '#ff8a80',
-              borderColor: item.User.gender === 'male' ? '#64b5f6' : '#ff8a80',
-              extendedProps: {
-                happiness_change: item.happiness_change,
-                isPartner: true,
-                userName: item.User.name
-              }
-            };
-          });
-        }).filter(event => event.start);
+        const partnerEvents = (partnerData as unknown as ActionResponse[])
+          .flatMap((item) => {
+            console.log("Processing partner event item:", item);
+            return item.Calendar.map((calendar) => {
+              console.log("Calendar item:", calendar);
+              console.log("User data:", item.User);
+              return {
+                id: `partner-${item.aid}-${calendar.timestamp}`,
+                title: item.action_name,
+                start: calendar.timestamp,
+                backgroundColor:
+                  item.User.gender === "male" ? "#64b5f6" : "#ff8a80",
+                borderColor:
+                  item.User.gender === "male" ? "#64b5f6" : "#ff8a80",
+                extendedProps: {
+                  happiness_change: item.happiness_change,
+                  isPartner: true,
+                  userName: item.User.name,
+                },
+              };
+            });
+          })
+          .filter((event) => event.start);
 
         console.log("Converted partner events:", partnerEvents);
 
@@ -169,7 +182,7 @@ export const useCalendarFunc = () => {
         console.log("All events to be set:", allEvents);
         setOurEvents(allEvents);
       } catch (error) {
-        console.error('Error in fetchData:', error);
+        console.error("Error in fetchData:", error);
       }
     };
 
@@ -199,6 +212,6 @@ export const useCalendarFunc = () => {
     setSelectedEvent,
     setIsOpen,
     isOpen,
-    handleEventClick
+    handleEventClick,
   };
 };

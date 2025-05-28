@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 import supabase from "@/lib/supabase";
-import { useAuth } from "@/components/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import LogoutButton from "@/components/LogoutButton";
-import { useRouter } from "next/navigation";
+import LogoutButton from "@/components/buttons/LogoutButton";
 
 // 確認モーダルコンポーネント
 const ConfirmModal: React.FC<{
@@ -48,7 +47,6 @@ const ConfirmModal: React.FC<{
 
 export default function Header() {
   const { uid, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [gender, setGender] = useState("");
@@ -93,7 +91,9 @@ export default function Header() {
 
         if (coupleData) {
           setHasPartner(true);
-          setPartnerId(coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1);
+          setPartnerId(
+            coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1
+          );
         } else {
           setHasPartner(false);
           setPartnerId(null);
@@ -195,11 +195,16 @@ export default function Header() {
             </div>
             <PopoverContent className="w-72 bg-white" align="end">
               <div className="grid gap-4">
-                <div className="font-medium text-lg text-black">ユーザー設定</div>
+                <div className="font-medium text-lg text-black">
+                  ユーザー設定
+                </div>
 
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <label htmlFor="username" className="text-sm font-medium text-black">
+                    <label
+                      htmlFor="username"
+                      className="text-sm font-medium text-black"
+                    >
                       ユーザー名
                     </label>
                     <input
@@ -213,7 +218,9 @@ export default function Header() {
                   </div>
 
                   <div className="space-y-2 text-black">
-                    <label className="text-sm font-medium text-black">性別</label>
+                    <label className="text-sm font-medium text-black">
+                      性別
+                    </label>
                     <div className="flex gap-4">
                       <label className="flex items-center gap-2">
                         <input
