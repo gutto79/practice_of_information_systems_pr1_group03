@@ -38,17 +38,15 @@ const calculateGradientColors = (happiness: number) => {
 
 interface UserStatusProps {
   happiness: number | null;
-  gender: string | null;
   name: string | null;
   isPartner?: boolean;
 }
 
 const HeartContainer: React.FC<{
   happiness: number;
-  gender: string | null;
   size?: "small" | "large";
   animate?: boolean;
-}> = ({ happiness, gender, size = "large", animate = true }) => {
+}> = ({ happiness, size = "large", animate = true }) => {
   const [animatedHappiness, setAnimatedHappiness] = useState(
     animate ? 0 : happiness
   );
@@ -163,7 +161,6 @@ const HeartContainer: React.FC<{
  */
 const UserStatus: React.FC<UserStatusProps> = ({
   happiness,
-  gender,
   name,
   isPartner = false,
 }) => {
@@ -171,12 +168,11 @@ const UserStatus: React.FC<UserStatusProps> = ({
     return (
       <div className="w-full max-w-xs">
         <div className="text-white mb-4 text-3xl text-center azuki-font">
-          {`${name || "相手"}の幸福度`}
+          {`${name || "相手"}`}
         </div>
         <div className="flex justify-center">
           <HeartContainer
             happiness={happiness ?? 0}
-            gender={gender}
             size="large"
             animate={true}
           />
@@ -191,12 +187,7 @@ const UserStatus: React.FC<UserStatusProps> = ({
       <div className="text-white mb-1 text-sm text-right azuki-font">
         {`${name || "自分"}の幸福度`}
       </div>
-      <HeartContainer
-        happiness={happiness ?? 0}
-        gender={gender}
-        size="small"
-        animate={false}
-      />
+      <HeartContainer happiness={happiness ?? 0} size="small" animate={false} />
     </div>
   );
 };

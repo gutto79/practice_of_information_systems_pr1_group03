@@ -8,10 +8,10 @@ import TimeRangeModal from "../components/TimeRangeModal";
 import Toast from "../components/Toast";
 import VideoPlayer from "../components/VideoPlayer";
 import { PopUp } from "@/components/display/Popup";
-import { styles } from "../utils/utils";
 import { useHomeData } from "../hooks/useHomeData";
 import { useMovie } from "../hooks/useMovie";
 import { useModal } from "@/hooks/useModal";
+import CenteredLoadingSpinner from "@/components/ui/centered-loading-spinner";
 
 /**
  * ホーム画面表示コンポーネント
@@ -24,15 +24,14 @@ const HomeDisplay: React.FC = () => {
   const {
     hasPartner,
     userHappiness,
-    userGender,
     userName,
     partnerHappiness,
-    partnerGender,
     partnerName,
     user,
     recentActions,
     pendingInvites,
     sentInvites,
+    loading,
 
     showToast,
     toastMessage,
@@ -70,14 +69,12 @@ const HomeDisplay: React.FC = () => {
     }
   }, [videoUrl]);
 
-  if (user === null) {
-    return (
-      <div className={styles.loadingContainer}>
-        <p>読み込み中...</p>
-      </div>
-    );
+  // データ読み込み中またはユーザー情報がない場合はローディング表示
+  if (loading || user === null) {
+    return <CenteredLoadingSpinner />;
   }
 
+  // パートナーがいない場合は招待フォームを表示
   if (!hasPartner) {
     return (
       <>
@@ -103,11 +100,7 @@ const HomeDisplay: React.FC = () => {
   return (
     <div className="relative p-6 h-screen">
       <div className="absolute top-4 right-4">
-        <UserStatus
-          happiness={userHappiness}
-          gender={userGender}
-          name={userName}
-        />
+        <UserStatus happiness={userHappiness} name={userName} />
       </div>
 
       {/* 相手の幸福度（中央） */}
@@ -116,7 +109,6 @@ const HomeDisplay: React.FC = () => {
           {/* パートナーの幸福度 */}
           <UserStatus
             happiness={partnerHappiness}
-            gender={partnerGender}
             name={partnerName}
             isPartner={true}
           />
@@ -152,26 +144,7 @@ const HomeDisplay: React.FC = () => {
         >
           <div className="flex items-center">
             {status.status === "processing" && (
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
+              <div className="animate-spin mr-3 h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
             )}
             <p>{status.message}</p>
             {status.status === "failed" && (

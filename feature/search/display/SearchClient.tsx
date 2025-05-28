@@ -6,6 +6,7 @@
 import React from "react";
 import { useSearch } from "../hooks/useSearch";
 import { Item, SearchProps } from "../types/types";
+import CenteredLoadingSpinner from "@/components/ui/centered-loading-spinner";
 
 /*─────────────────────*
  * メインコンポーネント
@@ -110,7 +111,7 @@ const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
 
       {/* ── 検索結果 ─────────────────── */}
       {loading ? (
-        <p className="text-center text-black pt-8">読み込み中…</p>
+        <CenteredLoadingSpinner />
       ) : items.happy.length + items.bad.length === 0 ? (
         <p className="text-black text-center pt-8">該当する項目がありません</p>
       ) : (

@@ -1,5 +1,7 @@
 "use client";
 
+import React, { useState } from "react";
+
 // FullCalendarコンポーネント。
 import FullCalendar from "@fullcalendar/react";
 
@@ -14,6 +16,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { useCalendarFunc } from "../hooks/useCalendarFunc";
 import EventDetailModal from "../components/EventDetailModal";
 import { PopUp } from "@/components/display/Popup";
+import CenteredLoadingSpinner from "@/components/ui/centered-loading-spinner";
 import "./calendar.css";
 
 const CalendarDisplay = () => {
@@ -26,6 +29,7 @@ const CalendarDisplay = () => {
     setSelectedEvent,
     eventDetailModal,
     handleEventClick,
+    loading,
   } = useCalendarFunc();
 
   // モーダルを閉じる際の処理
@@ -34,8 +38,24 @@ const CalendarDisplay = () => {
     eventDetailModal.closeModal();
   };
 
+  // 初回レンダリング時のローディング状態
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // データが読み込まれたらinitialLoadingをfalseに設定
+  React.useEffect(() => {
+    if (!loading && ourEvents.length > 0 && initialLoading) {
+      // データが読み込まれたらinitialLoadingをfalseに設定
+      setInitialLoading(false);
+    }
+  }, [loading, ourEvents, initialLoading]);
+
+  // データ読み込み中、初回レンダリング時、またはイベントが空の場合はローディングスピナーのみ表示
+  if (loading || initialLoading || ourEvents.length === 0) {
+    return <CenteredLoadingSpinner />;
+  }
+
   return (
-    <div className="flex flex-col gap-4 px-8 pt-2 pb-8">
+    <div className="flex flex-col gap-4 px-8 pt-2 pb-8 relative">
       {/* イベント詳細モーダル */}
       <PopUp isOpen={eventDetailModal.isOpen} onClose={handleCloseModal}>
         <EventDetailModal

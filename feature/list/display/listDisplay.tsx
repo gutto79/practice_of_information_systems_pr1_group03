@@ -11,6 +11,7 @@ import { PopUp } from "@/components/display/Popup";
 import { useModal } from "@/hooks/useModal";
 import { ItemType } from "../types/types";
 import HappinessChangeModal from "../components/HappinessChangeModal";
+import CenteredLoadingSpinner from "@/components/ui/centered-loading-spinner";
 
 /**
  * リスト表示コンポーネント
@@ -46,6 +47,7 @@ const ListDisplay: React.FC = () => {
     partnerUid,
     listType,
     loading,
+    dataLoading,
     editingItemId,
     confirmingItem,
     partnerName,
@@ -53,8 +55,8 @@ const ListDisplay: React.FC = () => {
 
     setActionName,
     setHappinessChange,
-    setIsShowingPartnerList,
-    setListType,
+    setIsShowingPartnerList: originalSetIsShowingPartnerList,
+    setListType: originalSetListType,
     setConfirmingItem,
     setEditingItemId,
 
@@ -126,8 +128,65 @@ const ListDisplay: React.FC = () => {
     happinessModal.closeModal();
   };
 
+  // リストタイプやパートナーリスト表示の切り替え時に、明示的にローディング状態を設定
+  const setIsShowingPartnerList = (show: boolean) => {
+    // 現在の表示状態と異なる場合のみ更新
+    if (show !== isShowingPartnerList) {
+      // 一度コンポーネントをアンマウントするために、dataLoadingを使わずに独自のローディング状態を使用
+      setShowLoading(true);
+      setTimeout(() => {
+        originalSetIsShowingPartnerList(show);
+        // 少し遅延させてからローディング状態を解除（UIの更新を確実にするため）
+        setTimeout(() => {
+          setShowLoading(false);
+        }, 500);
+      }, 0);
+    }
+  };
+
+  const setListType = (type: "like" | "sad") => {
+    // 現在のリストタイプと異なる場合のみ更新
+    if (type !== listType) {
+      // 一度コンポーネントをアンマウントするために、dataLoadingを使わずに独自のローディング状態を使用
+      setShowLoading(true);
+      setTimeout(() => {
+        originalSetListType(type);
+        // 少し遅延させてからローディング状態を解除（UIの更新を確実にするため）
+        setTimeout(() => {
+          setShowLoading(false);
+        }, 500);
+      }, 0);
+    }
+  };
+
+  // 独自のローディング状態
+  const [showLoading, setShowLoading] = useState(false);
+
+  // 初回レンダリング時のローディング状態
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // すべてのデータが読み込まれたかどうかを確認
+  const allDataLoaded =
+    !dataLoading && myName !== "あなた" && partnerName !== "パートナー";
+
+  // すべてのデータが読み込まれたらinitialLoadingをfalseに設定
+  React.useEffect(() => {
+    if (allDataLoaded && initialLoading) {
+      // すべてのデータが読み込まれたらinitialLoadingをfalseに設定
+      setInitialLoading(false);
+    }
+  }, [allDataLoaded, initialLoading]);
+
+  // データ読み込み中、ローディング表示中、または初回レンダリング時はローディングスピナーのみ表示
+  if (dataLoading || showLoading || initialLoading) {
+    return <CenteredLoadingSpinner />;
+  }
+
+  // リストが空の場合は空のリストを表示しない
+  const showEmptyList = !dataLoading && items.length === 0;
+
   return (
-    <>
+    <div className="relative">
       <ListHeader
         isShowingPartnerList={isShowingPartnerList}
         partnerUid={partnerUid}
@@ -149,13 +208,15 @@ const ListDisplay: React.FC = () => {
 
       <ListTypeSelector listType={listType} onSelectType={setListType} />
 
-      <ListContent
-        items={items}
-        isShowingPartnerList={isShowingPartnerList}
-        partnerUid={partnerUid}
-        onEdit={handleEditClick}
-        onConfirm={handleConfirmItem}
-      />
+      {!showEmptyList && (
+        <ListContent
+          items={items}
+          isShowingPartnerList={isShowingPartnerList}
+          partnerUid={partnerUid}
+          onEdit={handleEditClick}
+          onConfirm={handleConfirmItem}
+        />
+      )}
 
       {/* 入力フォームモーダル */}
       <PopUp isOpen={formModal.isOpen} onClose={handleCancelForm}>
@@ -213,7 +274,7 @@ const ListDisplay: React.FC = () => {
           />
         )}
       </PopUp>
-    </>
+    </div>
   );
 };
 

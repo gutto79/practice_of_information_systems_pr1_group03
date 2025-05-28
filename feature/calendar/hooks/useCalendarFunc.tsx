@@ -38,6 +38,7 @@ export const useCalendarFunc = () => {
     null
   );
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const { uid } = useAuth();
 
   // モーダル用のフック
@@ -48,9 +49,11 @@ export const useCalendarFunc = () => {
     const fetchData = async () => {
       if (!uid) {
         console.log("No uid available");
+        setLoading(false);
         return;
       }
 
+      setLoading(true);
       try {
         // カップルテーブルから相手のuidを取得
         const partnerUid = await calendarService.getCoupleRelationship(uid);
@@ -79,6 +82,8 @@ export const useCalendarFunc = () => {
         setOurEvents(allEvents);
       } catch (error) {
         console.error("Error in fetchData:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -115,5 +120,6 @@ export const useCalendarFunc = () => {
     setSelectedDate,
     eventDetailModal,
     handleEventClick,
+    loading,
   };
 };

@@ -23,6 +23,7 @@ interface UseListReturn {
   partnerUid: string | null;
   listType: "like" | "sad";
   loading: boolean;
+  dataLoading: boolean;
   editingItemId: number | null;
   confirmingItem: ItemType | null;
   myName: string;
@@ -58,6 +59,7 @@ export const useList = (): UseListReturn => {
   const [partnerUid, setPartnerUid] = useState<string | null>(null);
   const [listType, setListType] = useState<"like" | "sad">("like");
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [confirmingItem, setConfirmingItem] = useState<ItemType | null>(null);
   const [myName, setMyName] = useState("あなた");
@@ -109,9 +111,16 @@ export const useList = (): UseListReturn => {
   // リストタイプ、表示対象、uidが変更されたらアクションを取得
   useEffect(() => {
     const fetchActions = async () => {
-      const targetUid = isShowingPartnerList ? partnerUid : myUid;
-      const actions = await listService.getActions(targetUid, listType);
-      setItems(actions);
+      setDataLoading(true);
+      try {
+        const targetUid = isShowingPartnerList ? partnerUid : myUid;
+        const actions = await listService.getActions(targetUid, listType);
+        setItems(actions);
+      } catch (error) {
+        console.error("Error fetching actions:", error);
+      } finally {
+        setDataLoading(false);
+      }
     };
 
     fetchActions();
@@ -249,6 +258,7 @@ export const useList = (): UseListReturn => {
     partnerUid,
     listType,
     loading,
+    dataLoading,
     editingItemId,
     confirmingItem,
     myName,
