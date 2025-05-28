@@ -168,7 +168,7 @@ const UserStatus: React.FC<UserStatusProps> = ({
     return (
       <div className="w-full max-w-xs">
         <div className="text-white mb-4 text-3xl text-center azuki-font">
-          {`${name || "相手"}`}
+          {`${name || "相手"}`}幸福度
         </div>
         <div className="flex justify-center">
           <HeartContainer
