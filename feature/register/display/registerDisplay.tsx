@@ -1,51 +1,19 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import supabase from "@/lib/supabase";
-import { useAuth } from "@/hooks/useAuth";
+import React from "react";
+import { useRegister } from "../hooks/useRegister";
 
 const RegisterDisplay: React.FC = () => {
-  const [name, setName] = useState("");
-  const [gender, setGender] = useState("男性");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-  const { uid } = useAuth();
+  const {
+    name,
+    gender,
+    loading,
+    error,
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setName,
+    setGender,
 
-    try {
-      if (!uid) {
-        throw new Error(
-          "ユーザー情報が取得できませんでした。再度ログインしてください。"
-        );
-      }
-
-      // ユーザー情報をUserテーブルに挿入
-      const { error: insertError } = await supabase.from("User").insert([
-        {
-          uid: uid,
-          name: name,
-          gender: gender,
-          happiness: 50, // デフォルト値
-        },
-      ]);
-
-      if (insertError) throw insertError;
-
-      // 登録成功後、ホーム画面に遷移
-      router.push("/home");
-      router.refresh();
-    } catch (err) {
-      console.error("Registration error:", err);
-      setError(err instanceof Error ? err.message : "登録に失敗しました");
-    } finally {
-      setLoading(false);
-    }
-  };
+    handleRegister,
+  } = useRegister();
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">

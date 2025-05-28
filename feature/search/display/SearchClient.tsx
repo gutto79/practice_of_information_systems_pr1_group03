@@ -4,168 +4,26 @@
 "use client";
 
 import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
-
-/*─────────────────────*
- * 型宣言
- *─────────────────────*/
-type FilterType = "" | "positive" | "negative";
-type SortOrder = "asc" | "desc";
-
-interface Item {
-  id: number;
-  label: string;
-  weight: number;
-  like_count: number;
-  liked: boolean;
-  isHappy: boolean;
-}
-
-interface Props {
-  initialQuery: string;
-  initialType: FilterType;
-}
-
-/*─────────────────────*
- * Supabase ブラウザクライアント
- *─────────────────────*/
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-);
+import { useSearch } from "../hooks/useSearch";
+import { Item, SearchProps } from "../types/types";
 
 /*─────────────────────*
  * メインコンポーネント
  *─────────────────────*/
-const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
-  /* URL パラメータ */
-  const searchParams = useSearchParams();
-  const qParam = searchParams.get("q") ?? "";
-  const typeParam = (searchParams.get("type") ?? "") as FilterType;
+const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
+  const {
+    query,
+    type,
+    activeSection,
+    items,
+    loading,
 
-  /* フォーム state */
-  const [query, setQuery] = React.useState<string>(initialQuery);
-  const [type, setType] = React.useState<FilterType>(initialType);
-  const [activeSection, setActiveSection] = React.useState<"all" | "happy" | "bad">("happy");
+    setQuery,
+    setActiveSection,
 
-  /* 検索結果 state */
-  const [items, setItems] = React.useState<{ happy: Item[]; bad: Item[] }>({
-    happy: [],
-    bad: [],
-  });
-  const [loading, setLoading] = React.useState<boolean>(false);
-
-  /* URL → フォーム同期 */
-  React.useEffect(() => {
-    setQuery(qParam);
-    setType(typeParam);
-  }, [qParam, typeParam]);
-
-  /* URL 変更時にデータ再取得 */
-  React.useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-
-      /* ① Action 取得（フィルタ適用） */
-      let q = supabase
-        .from("Action")
-        .select("aid, action_name, happiness_change");
-
-      if (qParam) q = q.ilike("action_name", `%${qParam}%`);
-      if (typeParam === "positive") q = q.gt("happiness_change", 0);
-      if (typeParam === "negative") q = q.lt("happiness_change", 0);
-
-      const { data: actions = [] } = await q;
-
-      /* ② Like 行を取得して集計 */
-      const aidList = (actions ?? []).map((a) => a.aid);
-      const { data: likeRows = [] } = await supabase
-        .from("Like")
-        .select("aid, uid")
-        .in("aid", aidList);
-
-      const likeMap: Record<number, number> = {};
-      (likeRows ?? []).forEach(
-        (r) => (likeMap[r.aid] = (likeMap[r.aid] ?? 0) + 1)
-      );
-
-      /* ログインユーザの liked セット */
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const uid = user?.id;
-      const likedSet = new Set<number>();
-      if (uid)
-        (likeRows ?? []).forEach((r) => {
-          if (r.uid === uid) likedSet.add(r.aid);
-        });
-
-      /* ③ 整形・振り分け */
-      const all: Item[] = (actions ?? []).map((a: any) => ({
-        id: a.aid,
-        label: a.action_name,
-        weight: a.happiness_change,
-        like_count: likeMap[a.aid] ?? 0,
-        liked: likedSet.has(a.aid),
-        isHappy: a.happiness_change > 0,
-      }));
-
-      setItems({
-        happy: all
-          .filter((i) => i.isHappy)
-          .sort((a, b) => b.like_count - a.like_count),
-        bad: all
-          .filter((i) => !i.isHappy)
-          .sort((a, b) => b.like_count - a.like_count),
-      });
-
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [qParam, typeParam]);
-
-  /* URL 書き換えだけで "検索" */
-  const router = useRouter();
-  const runSearch = () => {
-    const p = new URLSearchParams();
-    if (query) p.set("q", query);
-    if (type) p.set("type", type);
-    router.push(`/search${p.size ? `?${p.toString()}` : ""}`);
-  };
-
-  /* いいね／いいね解除 */
-  const toggleLike = async (aid: number, liked: boolean) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      alert("ログインしてください");
-      return;
-    }
-
-    /* 楽観的更新 */
-    setItems((prev) => {
-      const upd = (arr: Item[]) =>
-        arr.map((i) =>
-          i.id === aid
-            ? {
-                ...i,
-                liked: !liked,
-                like_count: i.like_count + (liked ? -1 : 1),
-              }
-            : i
-        );
-      return { happy: upd(prev.happy), bad: upd(prev.bad) };
-    });
-
-    if (liked) {
-      await supabase.from("Like").delete().eq("uid", user.id).eq("aid", aid);
-    } else {
-      await supabase.from("Like").insert({ uid: user.id, aid });
-    }
-  };
+    runSearch,
+    toggleLike,
+  } = useSearch({ initialQuery, initialType });
 
   /* カード描画 */
   // ===== MODIFIED SECTION START =====
@@ -176,7 +34,9 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
     >
       <div className="flex-1 min-w-0">
         {/* 행동명 (i.label) 텍스트 크기를 text-lg로 변경 */}
-        <p className="text-lg font-medium text-black truncate azuki-font">{i.label}</p>
+        <p className="text-lg font-medium text-black truncate azuki-font">
+          {i.label}
+        </p>
         <p className="text-sm text-black azuki-font">
           幸福度: {i.weight > 0 ? "+" : ""}
           {i.weight}
@@ -220,9 +80,13 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
       {/* ── ソートボタン ─────────────────── */}
       <div className="flex gap-2 text-lg mb-2">
         <button
-          onClick={() => setActiveSection(activeSection === "happy" ? "all" : "happy")}
+          onClick={() =>
+            setActiveSection(activeSection === "happy" ? "all" : "happy")
+          }
           className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
-            activeSection === "happy" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+            activeSection === "happy"
+              ? "bg-fuchsia-100"
+              : "bg-white hover:bg-gray-50"
           }`}
         >
           <span className="text-2xl">❤️</span>
@@ -230,9 +94,13 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         </button>
 
         <button
-          onClick={() => setActiveSection(activeSection === "bad" ? "all" : "bad")}
+          onClick={() =>
+            setActiveSection(activeSection === "bad" ? "all" : "bad")
+          }
           className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
-            activeSection === "bad" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+            activeSection === "bad"
+              ? "bg-fuchsia-100"
+              : "bg-white hover:bg-gray-50"
           }`}
         >
           <span className="text-2xl">💙</span>
@@ -248,17 +116,19 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {/* Happyセクション */}
-          {(activeSection === "all" || activeSection === "happy") && type !== "negative" && (
-            <div className="space-y-4">
-              <ul className="space-y-4">{items.happy.map(renderCard)}</ul>
-            </div>
-          )}
+          {(activeSection === "all" || activeSection === "happy") &&
+            type !== "negative" && (
+              <div className="space-y-4">
+                <ul className="space-y-4">{items.happy.map(renderCard)}</ul>
+              </div>
+            )}
           {/* Badセクション */}
-          {(activeSection === "all" || activeSection === "bad") && type !== "positive" && (
-            <div className="space-y-4">
-              <ul className="space-y-4">{items.bad.map(renderCard)}</ul>
-            </div>
-          )}
+          {(activeSection === "all" || activeSection === "bad") &&
+            type !== "positive" && (
+              <div className="space-y-4">
+                <ul className="space-y-4">{items.bad.map(renderCard)}</ul>
+              </div>
+            )}
         </div>
       )}
     </section>

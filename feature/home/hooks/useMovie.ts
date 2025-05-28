@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as movieService from "../services/movieService";
 import type { MovieStatusResponse } from "../services/movieService";
 import type { TimeRange } from "../types/types";
-import { useHomeData } from "./useHomeData";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MovieState {
   videoUrl: string | null;
@@ -27,7 +27,7 @@ interface UseMovieReturn extends MovieState {
  * 動画関連の機能を管理するカスタムフック
  */
 export const useMovie = (): UseMovieReturn => {
-  const { user } = useHomeData();
+  const { uid } = useAuth();
   const [state, setState] = useState<MovieState>({
     videoUrl: null,
     loading: false,
@@ -61,7 +61,7 @@ export const useMovie = (): UseMovieReturn => {
 
   // 動画生成
   const handleGenerateMovie = async () => {
-    if (!user?.id) {
+    if (!uid) {
       const errorMessage = "ユーザーIDが見つかりません";
       updateState({
         error: errorMessage,
@@ -94,7 +94,7 @@ export const useMovie = (): UseMovieReturn => {
           : 1;
 
       // 動画生成を実行
-      const response = await movieService.generateMovie(user.id, days);
+      const response = await movieService.generateMovie(uid, days);
 
       // 動画URLを設定
       updateState({
