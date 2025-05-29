@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/hooks/useAuth";
 
 const LoginDisplay: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -11,7 +10,6 @@ const LoginDisplay: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { uid } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,22 +17,26 @@ const LoginDisplay: React.FC = () => {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      if (error) throw error;
+      if (authError) throw authError;
 
-      if (!uid) {
-        throw new Error("ユーザー情報の取得に失敗しました");
+      // 認証データが存在することを確認
+      if (!authData?.user?.id) {
+        throw new Error("認証情報の取得に失敗しました");
       }
+
+      const userId = authData.user.id;
 
       // Userテーブルにユーザー情報があるか確認
       const { data: userData, error: userError } = await supabase
         .from("User")
         .select("*")
-        .eq("uid", uid)
+        .eq("uid", userId)
         .single();
 
       if (userError && userError.code !== "PGRST116") {
@@ -93,8 +95,17 @@ const LoginDisplay: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <h1 className="text-3xl font-bold azuki-font px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-fuchsia-500 shadow-lg border border-white/30 mb-8">
+        <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)] relative">
+          <span className="absolute inset-0 bg-white/30 blur-sm opacity-70 animate-pulse rounded-full"></span>
+          HapiViz
+        </span>
+      </h1>
+
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h1 className="mb-6 text-2xl font-bold text-center text-black azuki-font">ログイン</h1>
+        <h2 className="mb-6 text-2xl font-bold text-center text-black azuki-font">
+          ログイン
+        </h2>
 
         {error && (
           <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
@@ -104,7 +115,10 @@ const LoginDisplay: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block mb-1 text-sm font-medium text-black azuki-font">
+            <label
+              htmlFor="email"
+              className="block mb-1 text-sm font-medium text-black azuki-font"
+            >
               メールアドレス
             </label>
             <input

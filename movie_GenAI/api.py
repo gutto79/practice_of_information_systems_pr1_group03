@@ -22,19 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class GenerationStatus(str, Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    FAILED = "failed"
 
-# 動画生成の状態を管理するためのグローバル変数
-movie_generation_status = {
-    "status": GenerationStatus.PENDING,
-    "message": "待機中",
-    "video_url": None,
-    "current_uid": None
-}
 
 # リクエストモデルの定義
 class MovieGenerationRequest(BaseModel):
@@ -47,7 +35,6 @@ class MovieGenerationResponse(BaseModel):
     message: str
     note: Optional[str] = None
     video_url: Optional[str] = None
-    status: Optional[GenerationStatus] = None
 
 # 環境変数のチェック
 def check_environment_variables():
@@ -105,67 +92,22 @@ async def get_dummy_video():
 
 @app.post("/api/generate-movie", response_model=MovieGenerationResponse)
 async def generate_movie(request: MovieGenerationRequest):
-    # 環境変数のチェック
-    missing_env_vars = check_environment_variables()
-    if missing_env_vars:
-        print(f"Missing environment variables: {', '.join(missing_env_vars)}. Using dummy data for development.")
-        video_path = Path(__file__).parent / "monthly_review.mp4"
-        if not video_path.exists():
-            raise HTTPException(status_code=404, detail="Dummy video file not found")
-        return FileResponse(
-            video_path,
-            media_type="video/mp4",
-            filename="monthly_review.mp4"
-        )
+    video_path = Path(__file__).parent / "monthly_review.mp4"  
     
     try:
-        # 既に生成済みの動画がある場合はそれを返す
-        video_path = Path("monthly_review.mp4")
-        if video_path.exists() and movie_generation_status["status"] == GenerationStatus.COMPLETED:
+        # 同期的に動画生成を実行
+        main(request.uid, request.days)
+
+        
+        # 生成された動画を返す
+        if video_path.exists():
             return FileResponse(
                 video_path,
                 media_type="video/mp4",
                 filename="monthly_review.mp4"
             )
-        # 初期状態を設定
-        movie_generation_status.update({
-            "status": GenerationStatus.PROCESSING,
-            "message": "動画生成中です",
-            "video_url": None,
-            "current_uid": request.uid
-        })
-        
-        try:
-            # 同期的に動画生成を実行
-            main(request.uid, request.days)
-            
-            # 生成完了時の状態を更新
-            movie_generation_status.update({
-                "status": GenerationStatus.COMPLETED,
-                "message": "動画生成が完了しました",
-                "video_url": "/api/video",
-                "current_uid": request.uid
-            })
-            
-            # 生成された動画を返す
-            if video_path.exists():
-                return FileResponse(
-                    video_path,
-                    media_type="video/mp4",
-                    filename="monthly_review.mp4"
-                )
-            else:
-                raise HTTPException(status_code=500, detail="動画ファイルが見つかりません")
-                
-        except Exception as e:
-            # エラー時の状態を更新
-            movie_generation_status.update({
-                "status": GenerationStatus.FAILED,
-                "message": f"動画生成中にエラーが発生しました: {str(e)}",
-                "video_url": None,
-                "current_uid": request.uid
-            })
-            raise HTTPException(status_code=500, detail=str(e))
+        else:
+            raise HTTPException(status_code=500, detail="動画ファイルが見つかりません")
             
     except Exception as e:
         raise HTTPException(

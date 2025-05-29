@@ -1,34 +1,39 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import UserStatus from "../components/UserStatus";
 import RecentActivities from "../components/RecentActivities";
 import InviteForm from "../components/InviteForm";
 import TimeRangeModal from "../components/TimeRangeModal";
-import BreakupModal from "../components/BreakupModal";
 import Toast from "../components/Toast";
-import VideoPlayer from "../components/VideoPlayer";
-import { styles } from "../utils/utils";
+import VideoModal from "../components/VideoModal";
+import { PopUp } from "@/components/display/Popup";
 import { useHomeData } from "../hooks/useHomeData";
 import { useMovie } from "../hooks/useMovie";
+import { useModal } from "@/hooks/useModal";
+import { useMovieContext } from "@/hooks/useMovieContext";
+import CenteredLoadingSpinner from "@/components/ui/centered-loading-spinner";
+
 /**
  * ホーム画面表示コンポーネント
  */
 const HomeDisplay: React.FC = () => {
+  // モーダル状態管理
+  const timeRangeModal = useModal();
+  const { videoPlayerModal, videoUrl } = useMovieContext();
+
   const {
     hasPartner,
     userHappiness,
-    userGender,
     userName,
     partnerHappiness,
-    partnerGender,
     partnerName,
     user,
     recentActions,
     pendingInvites,
     sentInvites,
+    loading,
 
-    showBreakupModal,
     showToast,
     toastMessage,
     showToastMessage,
@@ -37,33 +42,31 @@ const HomeDisplay: React.FC = () => {
     handleAcceptInvite,
     handleDeclineInvite,
     handleDeleteInvite,
-    handleBreakup,
-
-    setShowBreakupModal,
   } = useHomeData();
 
   const {
-    showTimeModal,
     selectedTimeRange,
     handleSelectTimeRange,
     handleGenerateMovie,
-    setShowTimeModal,
-    videoUrl,
-    setVideoUrl,
+    handleGetMovie,
     status,
     loading: movieLoading,
     clearError,
   } = useMovie();
 
-  if (user === null) {
-    return (
-      <div className={styles.loadingContainer}>
-        <p>読み込み中...</p>
-      </div>
-    );
+  // コンポーネントマウント時に動画を取得
+  useEffect(() => {
+    if (hasPartner) {
+      handleGetMovie();
+    }
+  }, [hasPartner]);
+
+  // データ読み込み中またはユーザー情報がない場合はローディング表示
+  if (loading || user === null) {
+    return <CenteredLoadingSpinner />;
   }
 
-  // パートナーがいない場合の表示
+  // パートナーがいない場合は招待フォームを表示
   if (!hasPartner) {
     return (
       <>
@@ -86,34 +89,18 @@ const HomeDisplay: React.FC = () => {
     );
   }
 
-  // パートナーがいる場合の表示
   return (
     <div className="relative p-6 h-screen">
-      {/* 自分の幸福度（右上角） */}
       <div className="absolute top-4 right-4">
-        <UserStatus
-          happiness={userHappiness}
-          gender={userGender}
-          name={userName}
-        />
+        <UserStatus happiness={userHappiness} name={userName} />
       </div>
 
       {/* 相手の幸福度（中央） */}
       <div className="flex items-center justify-center h-full">
         <div className="w-full max-w-xs">
-          {/* カップル画像 */}
-          <div className="flex justify-center mb-4">
-            <img
-              src="/feature/home/images/love_couple_good.png"
-              alt="カップル"
-              className="w-32 h-32 object-contain"
-            />
-          </div>
-
           {/* パートナーの幸福度 */}
           <UserStatus
             happiness={partnerHappiness}
-            gender={partnerGender}
             name={partnerName}
             isPartner={true}
           />
@@ -123,138 +110,89 @@ const HomeDisplay: React.FC = () => {
         </div>
       </div>
 
-      {/* 動画生成ボタン */}
-      <div className="fixed bottom-20 left-4">
+      {/* スライドショー生成ボタン */}
+      <div className="fixed top-20 left-4 flex flex-col gap-2">
         <button
-          onClick={() => setShowTimeModal(true)}
-          className={`${styles.button.action} ${
-            movieLoading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          disabled={movieLoading}
+          onClick={timeRangeModal.openModal}
+          className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 transition-colors text-white shadow-lg"
         >
-          {movieLoading ? (
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          <span className="text-sm font-medium">スライドショー生成</span>
+        </button>
+
+        {/* 動画生成状態表示 または 動画表示ボタン */}
+        {status?.status === "processing" ? (
+          <div className="px-3 py-2 rounded-lg shadow-lg bg-yellow-100 text-yellow-800">
+            <div className="flex items-center">
+              <div className="animate-spin mr-2 h-3 w-3 border-2 border-yellow-800 border-t-transparent rounded-full"></div>
+              <span className="text-sm">生成中...</span>
+            </div>
+          </div>
+        ) : status?.status === "failed" ? (
+          <div className="px-3 py-2 rounded-lg shadow-lg bg-red-100 text-red-800">
             <div className="flex items-center">
               <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
+                className="w-3 h-3 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
               >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
                 <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
-              <span>生成中...</span>
-            </div>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          )}
-        </button>
-      </div>
-
-      {/* 動画生成の進捗状況 */}
-      {status && (
-        <div
-          className={`fixed bottom-32 left-4 p-4 rounded-lg shadow-lg ${
-            status.status === "failed"
-              ? "bg-red-100 text-red-700"
-              : status.status === "completed"
-              ? "bg-green-100 text-green-700"
-              : "bg-blue-100 text-blue-700"
-          }`}
-        >
-          <div className="flex items-center">
-            {status.status === "processing" && (
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-            )}
-            <p>{status.message}</p>
-            {status.status === "failed" && (
+              <span className="text-sm">エラーが発生しました</span>
               <button
-                onClick={clearError}
-                className="ml-2 text-sm underline hover:no-underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearError();
+                }}
+                className="ml-2 text-xs underline hover:no-underline"
               >
                 閉じる
               </button>
-            )}
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* 時間範囲選択モーダル */}
-      <TimeRangeModal
-        isOpen={showTimeModal}
-        onClose={() => setShowTimeModal(false)}
-        selectedRange={selectedTimeRange}
-        onSelectRange={handleSelectTimeRange}
-        onGenerate={handleGenerateMovie}
-        disabled={movieLoading}
-      />
-
-      {/* パートナー解除ボタン */}
-      <div className="fixed bottom-20 right-4">
-        <button
-          className={styles.button.danger}
-          onClick={() => setShowBreakupModal(true)}
-        >
-          パートナー解除
-        </button>
+        ) : videoUrl || status?.status === "completed" ? (
+          <div
+            className="px-3 py-2 rounded-lg shadow-lg bg-purple-100 text-purple-800 cursor-pointer hover:bg-purple-200"
+            onClick={videoPlayerModal.openModal}
+          >
+            <div className="flex items-center">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              <span className="text-sm">スライドショー表示</span>
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      {/* パートナー解除確認モーダル */}
-      <BreakupModal
-        isOpen={showBreakupModal}
-        onClose={() => setShowBreakupModal(false)}
-        onConfirm={handleBreakup}
-      />
+      {/* 時間範囲選択モーダル */}
+      <PopUp isOpen={timeRangeModal.isOpen} onClose={timeRangeModal.closeModal}>
+        <div className="p-6">
+          <h3 className="text-xl font-bold mb-4">スライドショー生成</h3>
+          <TimeRangeModal
+            selectedRange={selectedTimeRange}
+            onSelectRange={handleSelectTimeRange}
+            onGenerate={async () => {
+              timeRangeModal.closeModal();
+              await handleGenerateMovie();
+            }}
+            disabled={movieLoading}
+          />
+        </div>
+      </PopUp>
 
-      {/* トースト通知 */}
-      <Toast
-        message={toastMessage}
-        isVisible={showToast}
-        onHide={() => showToastMessage("")}
-      />
-
-      {/* 動画プレーヤー */}
-      {videoUrl && (
-        <VideoPlayer
-          videoUrl={videoUrl}
-          onClose={() => {
-            setVideoUrl(null);
-            clearError();
-          }}
-        />
-      )}
+      {/* グローバルな動画プレーヤーモーダル */}
+      <VideoModal />
     </div>
   );
 };

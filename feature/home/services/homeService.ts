@@ -5,14 +5,6 @@ import supabase from "@/lib/supabase";
 import { Invite, RecentAction } from "../types/types";
 
 /**
- * 現在ログイン中のユーザー情報を取得する
- * @returns ユーザー情報
- */
-export const getCurrentUser = async () => {
-  return await supabase.auth.getUser();
-};
-
-/**
  * ユーザーの詳細情報を取得する
  * @param userId ユーザーID
  * @returns ユーザーの詳細情報

@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import { usePartnerContext } from "@/hooks/usePartnerContext";
 import {
   getFooterHeight,
   getTouchTargetSize,
@@ -7,6 +10,8 @@ import {
 } from "@/lib/styles/responsive";
 
 const Footer: React.FC = () => {
+  const { hasPartner } = usePartnerContext();
+
   const footerStyle = {
     ...getFooterHeight(),
     ...getSafeAreaPadding(),
@@ -22,13 +27,22 @@ const Footer: React.FC = () => {
       style={footerStyle}
     >
       <nav className="flex justify-around items-center h-16">
-        <Link
-          href="/list"
-          className="flex flex-col items-center justify-center"
-          style={linkStyle}
-        >
-          <span className="text-white text-lg">リスト</span>
-        </Link>
+        {hasPartner ? (
+          <Link
+            href="/list"
+            className="flex flex-col items-center justify-center"
+            style={linkStyle}
+          >
+            <span className="text-white text-lg">リスト</span>
+          </Link>
+        ) : (
+          <div
+            className="flex flex-col items-center justify-center opacity-50 cursor-not-allowed"
+            style={linkStyle}
+          >
+            <span className="text-white text-lg">リスト</span>
+          </div>
+        )}
         <Link
           href="/home"
           className="flex flex-col items-center justify-center"
@@ -36,13 +50,22 @@ const Footer: React.FC = () => {
         >
           <span className="text-white text-lg">ホーム</span>
         </Link>
-        <Link
-          href="/calendar"
-          className="flex flex-col items-center justify-center"
-          style={linkStyle}
-        >
-          <span className="text-white text-lg">カレンダー</span>
-        </Link>
+        {hasPartner ? (
+          <Link
+            href="/calendar"
+            className="flex flex-col items-center justify-center"
+            style={linkStyle}
+          >
+            <span className="text-white text-lg">カレンダー</span>
+          </Link>
+        ) : (
+          <div
+            className="flex flex-col items-center justify-center opacity-50 cursor-not-allowed"
+            style={linkStyle}
+          >
+            <span className="text-white text-lg">カレンダー</span>
+          </div>
+        )}
         <Link
           href="/search"
           className="flex flex-col items-center justify-center"
