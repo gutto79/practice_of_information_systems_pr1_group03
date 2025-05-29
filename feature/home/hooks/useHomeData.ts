@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { HomeState, Invite, TimeRange } from "../types/types";
+import { HomeState, Invite } from "../types/types";
 import * as homeService from "../services/homeService";
-import * as movieService from "../services/movieService";
-import type { MovieResponse } from "../services/movieService";
 
 /**
  * ホーム画面のデータと機能を管理するカスタムフック
@@ -25,12 +23,9 @@ export const useHomeData = () => {
     userName: null,
     partnerName: null,
     recentActions: [],
-    showTimeModal: false,
-    selectedTimeRange: "1日",
     showBreakupModal: false,
     showToast: false,
     toastMessage: "",
-    videoUrl: null,
   });
 
   const router = useRouter();
@@ -253,64 +248,6 @@ export const useHomeData = () => {
     }
   };
 
-  // 時間範囲選択
-  const handleSelectTimeRange = (range: TimeRange) => {
-    updateState({ selectedTimeRange: range });
-  };
-
-  // 動画生成
-  const handleGenerateMovie = async () => {
-    try {
-      showToastMessage("動画生成中...");
-      updateState({ loading: true });
-
-      // TODO: Implement actual movie generation
-      // When implementing actual movie generation, we'll need to calculate days based on selectedTimeRange
-      //const responseData = await movieService.generateMovie(
-      //  user?.uid || "",
-      //  state.selectedTimeRange === "1週間" ? 7 : state.selectedTimeRange === "1ヶ月" ? 30 : 1
-      //);
-
-      // Temporary: Use dummy video for now
-      const responseData = (await movieService.getMovie()) as MovieResponse;
-
-      // 開発モードの場合は注意書きを表示
-      if (process.env.NODE_ENV === "development") {
-        showToastMessage("開発モード: ダミー動画を使用しています");
-      }
-
-      if (responseData.video_url) {
-        updateState({ videoUrl: responseData.video_url });
-      }
-    } catch (error) {
-      console.error("動画生成エラー:", error);
-      showToastMessage(
-        error instanceof Error ? error.message : "動画生成に失敗しました"
-      );
-    } finally {
-      updateState({ loading: false });
-    }
-  };
-
-  // 動画取得
-  const handleGetMovie = async () => {
-    try {
-      const response = await movieService.getMovie();
-      if (response.video_url) {
-        updateState({ videoUrl: response.video_url });
-        showToastMessage("動画を取得しました！");
-      } else {
-        throw new Error("動画のURLを取得できませんでした");
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        showToastMessage(error.message);
-      } else {
-        showToastMessage("動画の取得に失敗しました");
-      }
-    }
-  };
-
   return {
     ...state,
     showToastMessage,
@@ -320,13 +257,8 @@ export const useHomeData = () => {
     handleDeclineInvite,
     handleDeleteInvite,
     handleBreakup,
-    handleSelectTimeRange,
-    handleGenerateMovie,
-    setShowTimeModal: (show: boolean) => updateState({ showTimeModal: show }),
     setShowBreakupModal: (show: boolean) =>
       updateState({ showBreakupModal: show }),
     setInviteId: (id: string) => updateState({ inviteId: id }),
-    handleGetMovie,
-    setVideoUrl: (url: string | null) => updateState({ videoUrl: url }),
   };
 };
