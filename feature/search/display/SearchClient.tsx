@@ -30,6 +30,7 @@ interface Props {
 /*─────────────────────*
  * Supabase ブラウザクライアント
  *─────────────────────*/
+// 以下の行のコメントアウトを解除しました
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
@@ -168,16 +169,15 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   };
 
   /* カード描画 */
-  // ===== MODIFIED SECTION START =====
   const renderCard = (i: Item) => (
     <li
       key={i.id}
       className="text-black border rounded-lg p-4 flex justify-between bg-white shadow-sm hover:shadow-md transition-shadow"
     >
       <div className="flex-1 min-w-0">
-        {/* 행동명 (i.label) 텍스트 크기를 text-lg로 변경 */}
+        {/* 行動名 (i.label) 텍스트 크기를 text-lg로 변경 */}
         <p className="text-lg font-medium text-black truncate azuki-font">{i.label}</p>
-        <p className="text-sm text-black azuki-font">
+        <p className={`text-sm azuki-font ${i.weight > 0 ? "text-fuchsia-700" : "text-blue-700"}`}>
           幸福度: {i.weight > 0 ? "+" : ""}
           {i.weight}
         </p>
@@ -194,7 +194,6 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
       </button>
     </li>
   );
-  // ===== MODIFIED SECTION END =====
 
   /*─────────────────────*
    * JSX
