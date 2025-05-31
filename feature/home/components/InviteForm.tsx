@@ -66,7 +66,7 @@ const InviteForm: React.FC<InviteFormProps> = ({
       )}
 
       {/* 招待フォーム */}
-      <p className="text-xl mb-6 text-white">招待しょう！</p>
+      <p className="text-xl mb-6 text-white">招待しよう！</p>
       <form onSubmit={handleSubmit} className="w-full max-w-xs">
         <input
           type="text"
