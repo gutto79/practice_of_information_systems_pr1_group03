@@ -12,6 +12,7 @@ import { createClient } from "@supabase/supabase-js";
  *─────────────────────*/
 type FilterType = "" | "positive" | "negative";
 type SortOrder = "asc" | "desc";
+type GenderFilter = "all" | "male" | "female"; // 性別フィルターの型を追加
 
 interface Item {
   id: number;
@@ -30,7 +31,6 @@ interface Props {
 /*─────────────────────*
  * Supabase ブラウザクライアント
  *─────────────────────*/
-// 以下の行のコメントアウトを解除しました
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
@@ -44,11 +44,13 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   const searchParams = useSearchParams();
   const qParam = searchParams.get("q") ?? "";
   const typeParam = (searchParams.get("type") ?? "") as FilterType;
+  const genderParam = (searchParams.get("gender") ?? "all") as GenderFilter; // 性別パラメータを追加
 
   /* フォーム state */
   const [query, setQuery] = React.useState<string>(initialQuery);
   const [type, setType] = React.useState<FilterType>(initialType);
   const [activeSection, setActiveSection] = React.useState<"all" | "happy" | "bad">("happy");
+  const [genderFilter, setGenderFilter] = React.useState<GenderFilter>(genderParam); // 性別フィルターのstateを追加
 
   /* 検索結果 state */
   const [items, setItems] = React.useState<{ happy: Item[]; bad: Item[] }>({
@@ -61,21 +63,51 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
   React.useEffect(() => {
     setQuery(qParam);
     setType(typeParam);
-  }, [qParam, typeParam]);
+    setGenderFilter(genderParam); // 性別フィルターも同期
+  }, [qParam, typeParam, genderParam]); // 依存配列にgenderParamを追加
 
   /* URL 変更時にデータ再取得 */
   React.useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
 
+      let targetUids: string[] | null = null;
+      if (genderFilter !== "all") {
+        // 性別フィルターが指定されている場合、UserテーブルからUIDを取得
+        const { data: usersData, error: usersError } = await supabase
+          .from("User")
+          .select("uid")
+          .eq("gender", genderFilter); // 'gender' カラムでフィルタリング
+
+        if (usersError) {
+          console.error("ユーザー取得エラー (性別フィルタ):", usersError);
+          setItems({ happy: [], bad: [] });
+          setLoading(false);
+          return;
+        }
+        targetUids = (usersData || []).map((u) => u.uid);
+
+        // 該当するUIDがない場合、そこで処理を終了
+        if (targetUids.length === 0) {
+          setItems({ happy: [], bad: [] });
+          setLoading(false);
+          return;
+        }
+      }
+
       /* ① Action 取得（フィルタ適用） */
       let q = supabase
         .from("Action")
-        .select("aid, action_name, happiness_change");
+        .select("aid, action_name, happiness_change, uid"); // uid も選択する
 
       if (qParam) q = q.ilike("action_name", `%${qParam}%`);
       if (typeParam === "positive") q = q.gt("happiness_change", 0);
       if (typeParam === "negative") q = q.lt("happiness_change", 0);
+
+      // 性別フィルターが適用されている場合、in クエリで絞り込む
+      if (targetUids !== null) {
+        q = q.in("uid", targetUids);
+      }
 
       const { data: actions = [] } = await q;
 
@@ -125,7 +157,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
     };
 
     fetchData();
-  }, [qParam, typeParam]);
+  }, [qParam, typeParam, genderFilter]); // 依存配列にgenderFilterを追加
 
   /* URL 書き換えだけで "検索" */
   const router = useRouter();
@@ -133,6 +165,7 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
     const p = new URLSearchParams();
     if (query) p.set("q", query);
     if (type) p.set("type", type);
+    if (genderFilter !== "all") p.set("gender", genderFilter); // 性別フィルターもURLに反映
     router.push(`/search${p.size ? `?${p.toString()}` : ""}`);
   };
 
@@ -175,7 +208,6 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
       className="text-black border rounded-lg p-4 flex justify-between bg-white shadow-sm hover:shadow-md transition-shadow"
     >
       <div className="flex-1 min-w-0">
-        {/* 行動名 (i.label) 텍스트 크기를 text-lg로 변경 */}
         <p className="text-lg font-medium text-black truncate azuki-font">{i.label}</p>
         <p className={`text-sm azuki-font ${i.weight > 0 ? "text-fuchsia-700" : "text-blue-700"}`}>
           幸福度: {i.weight > 0 ? "+" : ""}
@@ -216,12 +248,18 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         </button>
       </div>
 
-      {/* ── ソートボタン ─────────────────── */}
+      {/* ── 感情ソートボタン ─────────────────── */}
       <div className="flex gap-2 text-lg mb-2">
         <button
-          onClick={() => setActiveSection(activeSection === "happy" ? "all" : "happy")}
+          onClick={() => {
+            setActiveSection("happy");
+            // Set type to "positive" when "嬉しい" is clicked, and update URL
+            const p = new URLSearchParams(searchParams.toString());
+            p.set("type", "positive");
+            router.push(`/search?${p.toString()}`);
+          }}
           className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
-            activeSection === "happy" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+            type === "positive" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
           }`}
         >
           <span className="text-2xl">❤️</span>
@@ -229,13 +267,81 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         </button>
 
         <button
-          onClick={() => setActiveSection(activeSection === "bad" ? "all" : "bad")}
+          onClick={() => {
+            setActiveSection("bad");
+            // Set type to "negative" when "悲しい" is clicked, and update URL
+            const p = new URLSearchParams(searchParams.toString());
+            p.set("type", "negative");
+            router.push(`/search?${p.toString()}`);
+          }}
           className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
-            activeSection === "bad" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+            type === "negative" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
           }`}
         >
           <span className="text-2xl">💙</span>
           <span className="text-black">悲しい</span>
+        </button>
+        {/* New "全て" button for emotion filter */}
+        <button
+          onClick={() => {
+            setActiveSection("all");
+            // Remove type from URL
+            const p = new URLSearchParams(searchParams.toString());
+            p.delete("type");
+            router.push(`/search?${p.toString()}`);
+          }}
+          className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
+            type === "" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+          }`}
+        >
+          <span className="text-2xl">🔄</span> {/* Or a suitable icon for "all" */}
+          <span className="text-black">全て</span>
+        </button>
+      </div>
+
+      {/* ── 性別フィルターボタン ─────────────────── */}
+      <div className="flex gap-2 text-md mb-4 justify-center">
+        <button
+          onClick={() => {
+            setGenderFilter("all");
+            // URLパラメータも更新
+            const p = new URLSearchParams(searchParams.toString());
+            p.delete("gender");
+            router.push(`/search?${p.toString()}`);
+          }}
+          className={`px-4 py-2 rounded-lg border shadow-sm transition-colors ${
+            genderFilter === "all" ? "bg-gray-200" : "bg-white hover:bg-gray-50"
+          } text-black font-medium`}
+        >
+          全て
+        </button>
+        <button
+          onClick={() => {
+            setGenderFilter("male");
+            // URLパラメータも更新
+            const p = new URLSearchParams(searchParams.toString());
+            p.set("gender", "male");
+            router.push(`/search?${p.toString()}`);
+          }}
+          className={`px-4 py-2 rounded-lg border shadow-sm transition-colors ${
+            genderFilter === "male" ? "bg-blue-100" : "bg-white hover:bg-gray-50"
+          } text-black font-medium`}
+        >
+          男性
+        </button>
+        <button
+          onClick={() => {
+            setGenderFilter("female");
+            // URLパラメータも更新
+            const p = new URLSearchParams(searchParams.toString());
+            p.set("gender", "female");
+            router.push(`/search?${p.toString()}`);
+          }}
+          className={`px-4 py-2 rounded-lg border shadow-sm transition-colors ${
+            genderFilter === "female" ? "bg-pink-100" : "bg-white hover:bg-gray-50"
+          } text-black font-medium`}
+        >
+          女性
         </button>
       </div>
 
