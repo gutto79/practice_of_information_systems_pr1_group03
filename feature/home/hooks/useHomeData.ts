@@ -69,10 +69,10 @@ export const useHomeData = () => {
           uid as string
         );
 
+        let partnerId = null;
         if (coupleData) {
           // パートナーIDの特定
-          const partnerId =
-            coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1;
+          partnerId = coupleData.uid1 === uid ? coupleData.uid2 : coupleData.uid1;
 
           // パートナー情報取得
           const partnerData = await homeService.getUserDetails(partnerId);
@@ -94,8 +94,10 @@ export const useHomeData = () => {
           });
         }
 
-        // 最近のアクション取得
-        const recentActions = await homeService.getRecentActions(uid as string);
+        // 最近のアクション取得（交往对象）
+        const recentActions = partnerId
+          ? await homeService.getRecentActions(partnerId)
+          : [];
         updateState({ recentActions });
 
         // 受け取った招待取得
