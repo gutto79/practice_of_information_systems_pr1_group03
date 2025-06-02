@@ -20,7 +20,7 @@ interface UseRegisterReturn {
  */
 export const useRegister = (): UseRegisterReturn => {
   const [name, setName] = useState("");
-  const [gender, setGender] = useState("男性");
+  const [gender, setGender] = useState("male");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
