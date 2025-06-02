@@ -4,11 +4,104 @@ import React, { useState } from "react";
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
+// 初回登録用モーダルコンポーネント
+const SignUpModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSignUp: (email: string, password: string) => Promise<void>;
+}> = ({ isOpen, onClose, onSignUp }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      await onSignUp(email, password);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "登録に失敗しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 className="text-xl font-bold mb-4 text-center">初回アカウント登録</h3>
+        
+        {error && (
+          <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="modal-email" className="block mb-1 text-sm font-medium">
+              メールアドレス
+            </label>
+            <input
+              id="modal-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="メールアドレス"
+              required
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="modal-password" className="block mb-1 text-sm font-medium">
+              パスワード
+            </label>
+            <input
+              id="modal-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="パスワード"
+              required
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              キャンセル
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 text-white bg-fuchsia-700 rounded-md hover:bg-fuchsia-800 disabled:bg-fuchsia-500"
+            >
+              {loading ? "処理中..." : "登録"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const LoginDisplay: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -59,37 +152,32 @@ const LoginDisplay: React.FC = () => {
     }
   };
 
-  const handleSignUp = async () => {
-    setLoading(true);
-    setError(null);
-
+  const handleSignUp = async (email: string, password: string) => {
     try {
-      console.log("SignUp attempt with email:", email); // デバッグログ
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            email: email,
+          }
         },
       });
 
-      console.log("SignUp response:", { data, error }); // デバッグログ
-
       if (error) {
-        console.error("SignUp error:", error); // エラーログ
+        console.error("SignUp error:", error);
         throw error;
       }
 
-      // 登録メール送信成功
-      console.log("SignUp success, user:", data.user); // デバッグログ
-      alert("確認メールを送信しました。メールをご確認ください。");
+      if (data?.user) {
+        alert("確認メールを送信しました。メールをご確認ください。");
+      } else {
+        throw new Error("ユーザー登録に失敗しました");
+      }
     } catch (err) {
-      console.error("SignUp catch error:", err); // エラーログ
-      setError(
-        err instanceof Error ? err.message : "サインアップに失敗しました"
-      );
-    } finally {
-      setLoading(false);
+      console.error("SignUp catch error:", err);
+      throw err;
     }
   };
 
@@ -161,7 +249,7 @@ const LoginDisplay: React.FC = () => {
           <div className="mt-2 text-center">
             <button
               type="button"
-              onClick={handleSignUp}
+              onClick={() => setShowSignUpModal(true)}
               disabled={loading}
               className="text-xl text-fuchsia-700 hover:underline azuki-font"
             >
@@ -170,6 +258,12 @@ const LoginDisplay: React.FC = () => {
           </div>
         </form>
       </div>
+
+      <SignUpModal
+        isOpen={showSignUpModal}
+        onClose={() => setShowSignUpModal(false)}
+        onSignUp={handleSignUp}
+      />
     </div>
   );
 };
