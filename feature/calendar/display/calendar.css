@@ -6,50 +6,49 @@
 
 
 /* ボタンの色変える */
-.fc-button,
 .fc-button-primary,
-.fc-button:focus,
-.fc-button:disabled,
-.fc-button:hover,
-.fc-button:active,
-.fc-button-primary,
+.fc-button-primary:active,
+.fc-button-primary:focus,
+.fc-button-primary:disabled,
+.fc-button-primary:hover,
+
 .fc-button-primary:active {
   background-color: rgb(162 28 175) !important;
   border-color: white !important;
   color: white !important;
   border-radius: 8px !important;
 }
-.fc-button.fc-button-primary {
-    background-color: white; /* 赤系 */
-    border-color: white;
-    color: rgb(162 28 175);
-    border-radius: 8px !important;
-  }
-.fc-button[disabled] {
-  background-color: white !important;
+
+.fc-button-primary:disabled {
+  background-color: white;
   border-color: rgb(162 28 175);
-  color: rgb(162 28 175) !important;
+  color: rgb(162 28 175);
   opacity: 0.6;
   cursor: not-allowed;
   border-radius: 8px !important;
 }
 .fc-button-primary:hover {
-  background-color: white !important;
+  background-color: white;
   border-color: rgb(162 28 175);
-  color: rgb(162 28 175) !important;
+  color: rgb(162 28 175);
 }
 
 /* フォーカス時 */
 .fc-button-primary:focus {
   background-color: white !important;
-  border-color: rgb(162 28 175);
+  border-color: rgb(162 28 175) !important;
+  color: #a21caf !important;
+}
+.fc-button-active{
+  background-color: white !important;
+  border-color: rgb(162 28 175) !important;
   color: rgb(162 28 175) !important;
+  border-radius: 8px !important;
 }
 
 
 /* カレンダーのボタン群を横並びにする */
 .fc-header-toolbar {
-  padding-top: 2.5rem;
   display: flex;
   flex-direction: column; /* 上下に分ける */
 }
@@ -91,3 +90,36 @@
   overflow: hidden;
 }
 
+
+/* FullCalendar のポップアップ（+件を押したときのモーダル） */
+.fc-popover {
+  border-radius: 12px !important;   /* 角丸 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* 軽い影を追加 */
+  transform: translate(-50%, -50%) !important; /* 中央寄せ調整 */
+  left: 50% !important;
+  top: 50% !important;
+  z-index: 100 !important;
+  max-width: 90vw !important; /* 画面幅の90%を最大幅に */
+  width: auto !important; /* 幅を自動調整 */
+  max-height: 80vh !important; /* 画面高さの80%を最大高さに */
+  overflow-y: auto !important; /* 縦方向のスクロールを許可 */
+}
+
+/* モーダル内部も少し余白つける */
+.fc-popover .fc-popover-body {
+  padding: 8px;
+  max-width: 100% !important; /* 親要素の幅を超えないように */
+  overflow-x: hidden !important; /* 横方向のスクロールを防止 */
+}
+
+/* 月表示の各行（日曜〜土曜）を80pxに固定 */
+.fc-daygrid-day {
+  height: 85px !important;
+  max-height: 85px !important;
+  overflow: hidden;
+}
+
+/* 内部のフレームも同様に制限 */
+.fc .fc-daygrid-day-events {
+  margin-bottom: 0px !important;
+}

@@ -101,17 +101,18 @@ const CalendarDisplay = () => {
             hour12: false,
           }}
           eventDisplay="block"
+          dayMaxEventRows={2}
           eventContent={(eventInfo) => {
             return {
               html: `
-                  <div class="fc-event-main-frame">
-                    <div class="fc-event-title-container">
-                      <div class="fc-event-title fc-sticky">
-                        ${eventInfo.event.title}
-                      </div>
+                <div class="fc-event-main-frame">
+                  <div class="fc-event-title-container">
+                    <div class="fc-event-title fc-sticky">
+                      ${eventInfo.event.title}
                     </div>
                   </div>
-                `,
+                </div>
+              `,
             };
           }}
         />
