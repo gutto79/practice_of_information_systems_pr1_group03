@@ -39,10 +39,10 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions, name }) =>
               className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-lg azuki-font gap-1 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg px-2"
             >
               <div className="flex items-center justify-between w-full min-w-0">
-                <span className="text-gray-600 truncate mr-4">{action.action_name}</span>
+                <span className="text-gray-600 truncate flex-1 min-w-0">{action.action_name}</span>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-lg whitespace-nowrap w-16 text-right ${
+                    className={`text-lg whitespace-nowrap w-10 text-right ${
                       action.happiness_change > 0
                         ? "text-pink-500"
                         : "text-blue-500"
