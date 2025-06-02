@@ -28,9 +28,9 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions, name }) =>
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-lg whitespace-nowrap w-16 text-right ${
-                      action.happiness_change >= 0
-                        ? "text-blue-500"
-                        : "text-red-500"
+                      action.happiness_change > 0
+                        ? "text-pink-500"
+                        : "text-blue-500"
                     }`}
                   >
                     {action.happiness_change > 0 ? "+" : ""}
