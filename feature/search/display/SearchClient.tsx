@@ -68,7 +68,7 @@ const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="キーワード検索"
-          className="flex-1 border rounded px-3 py-2 bg-white text-black"
+          className="flex-1 border rounded px-3 py-2 bg-white text-gray-800 font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
         />
         <button
           onClick={runSearch}
