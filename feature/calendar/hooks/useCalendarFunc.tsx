@@ -1,160 +1,125 @@
 import FullCalendar from "@fullcalendar/react";
+import { EventClickArg } from "@fullcalendar/core";
 import { format } from "date-fns";
 import { createRef, useState, useEffect } from "react";
-import supabase from "@/lib/supabase";
-import { useAuth } from "@/components/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
+import { useModal } from "@/hooks/useModal";
+import * as calendarService from "../services/calendarService";
+
+// イベントの型定義
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  backgroundColor: string;
+  borderColor: string;
+  extendedProps: {
+    happiness_change: number;
+    isPartner: boolean;
+    userName: string;
+  };
+}
+
+// 選択されたイベントの型定義
+export interface SelectedEvent {
+  title: string;
+  start: Date;
+  extendedProps?: {
+    happiness_change?: number;
+    isPartner?: boolean;
+    userName?: string;
+  };
+}
 
 export const useCalendarFunc = () => {
-  const [eventsTitle, setEventsTitle] = useState("");
-  const [eventsStartDate, setEventsStartDate] = useState<Date>();
-  const [eventsStartTime, setEventsStartTime] = useState("");
-  const [isOpenSheet, setIsOpenSheet] = useState<boolean>(false);
   const ref = createRef<FullCalendar>();
-  const [myEvents, setMyEvents] = useState<any[]>([]);
+  const [ourEvents, setOurEvents] = useState<CalendarEvent[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(
+    null
+  );
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const { uid } = useAuth();
+
+  // モーダル用のフック
+  const eventDetailModal = useModal();
 
   // データを取得してカレンダーイベントとして設定
   useEffect(() => {
     const fetchData = async () => {
-      if (!uid) return;
-      
-      const { data, error } = await supabase
-        .from('Action')
-        .select(`
-          aid,
-          action_name,
-          happiness_change,
-          Calendar (
-            timestamp
-          )
-        `)
-        .eq('uid', uid);
-
-      if (error) {
-        console.error('Error fetching data:', error);
+      if (!uid) {
+        console.log("No uid available");
+        setLoading(false);
         return;
       }
 
-      if (data) {
-        // データをカレンダーイベントの形式に変換
-        const events = data.flatMap(item => 
-          item.Calendar.map(calendar => ({
-            id: `${item.aid}-${calendar.timestamp}`,
-            title: item.action_name,
-            start: calendar.timestamp,
-            backgroundColor: item.happiness_change < 0 ? '#e53935' : '#2196f3', // マイナスは赤、プラスは青
-            borderColor: item.happiness_change < 0 ? '#e53935' : '#2196f3', // マイナスは赤、プラスは青
-            extendedProps: {
-              happiness_change: item.happiness_change
-            }
-          }))
-        ).filter(event => event.start); // timestampが存在するイベントのみを表示
+      setLoading(true);
+      try {
+        // カップルテーブルから相手のuidを取得
+        const partnerUid = await calendarService.getCoupleRelationship(uid);
+        if (!partnerUid) {
+          console.log("No partner found");
+          return;
+        }
 
-        setMyEvents(events);
+        // 自分のイベントを取得
+        const myData = await calendarService.getUserEvents(uid);
+
+        // 相手のイベントを取得
+        const partnerData = await calendarService.getPartnerEvents(partnerUid);
+
+        // 自分のイベントをカレンダーイベントの形式に変換
+        const myEvents = calendarService.convertToCalendarEvents(myData, false);
+
+        // 相手のイベントをカレンダーイベントの形式に変換
+        const partnerEvents = calendarService.convertToCalendarEvents(
+          partnerData,
+          true
+        );
+
+        // 両方のイベントを結合
+        const allEvents = [...myEvents, ...partnerEvents];
+        setOurEvents(allEvents);
+      } catch (error) {
+        console.error("Error in fetchData:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
-  }, [uid]); // uidを依存配列に追加
+  }, [uid]);
 
-  const handleDateClick = (arg: { dateStr: string }) => {
-    setSelectedDate(arg.dateStr);
-    setIsOpen(true);
+  const handleSelect = (selectedInfo: { start: Date }) => {
+    // 現在は何もしない
+    console.log("Selected date:", format(selectedInfo.start, "yyyy-MM-dd"));
   };
 
-  const handleSelect = (selectedInfo: any) => {
-    const start_date = new Date(selectedInfo.start);
-    const start_time = format(start_date, "HH:mm");
-    setEventsTitle("");
-    setEventsStartDate(start_date);
-    setEventsStartTime(start_time);
-    setIsOpenSheet(true);
-  };
-
-  const onAddEvent = async () => {
-    if (!ref.current || !eventsStartDate) {
-      return;
-    }
-
-    // 開始時間を設定
-    const [sh, sm] = eventsStartTime.split(":").map(Number);
-    eventsStartDate.setHours(sh);
-    eventsStartDate.setMinutes(sm);
-
-    try {
-      // actionテーブルからタイトルを取得
-      const { data: actionData, error: actionError } = await supabase
-        .from('actions')
-        .select('title')
-        .single();
-
-      if (actionError) {
-        throw actionError;
-      }
-
-      const event = {
-        title: actionData.title,
-        start: eventsStartDate.toISOString(),
-      };
-
-      // Supabaseにイベントを保存
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .insert([event])
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
-      // 保存したイベントをカレンダーに表示
-      const savedEvent = {
-        id: data[0].id,
-        title: actionData.title,
-        start: eventsStartDate,
-      };
-      
-      setMyEvents([...myEvents, savedEvent]);
-      ref.current.getApi().addEvent(savedEvent);
-      
-      // フォームをリセット
-      setEventsTitle("");
-      setEventsStartDate(undefined);
-      setEventsStartTime("");
-      setIsOpenSheet(false);
-    } catch (error) {
-      console.error('Error saving event:', error);
-      alert('イベントの保存に失敗しました');
-    }
-  };
-
-  const handleEventClick = (info: any) => {
-    setSelectedEvent(info.event);
-    setIsOpen(true);
+  const handleEventClick = (info: EventClickArg) => {
+    // EventClickArgからSelectedEvent形式に変換
+    const event = {
+      title: info.event.title,
+      start: info.event.start as Date,
+      extendedProps: {
+        happiness_change: info.event.extendedProps?.happiness_change,
+        isPartner: info.event.extendedProps?.isPartner,
+        userName: info.event.extendedProps?.userName,
+      },
+    };
+    setSelectedEvent(event);
+    eventDetailModal.openModal();
   };
 
   return {
-    eventsTitle,
-    setEventsTitle,
-    eventsStartDate,
-    setEventsStartDate,
-    eventsStartTime,
-    setEventsStartTime,
-    isOpenSheet,
-    setIsOpenSheet,
     handleSelect,
     ref,
-    myEvents,
-    onAddEvent,
-    handleDateClick,
-    selectedDate,
+    ourEvents,
     selectedEvent,
     setSelectedEvent,
-    setIsOpen,
-    isOpen,
-    handleEventClick
+    selectedDate,
+    setSelectedDate,
+    eventDetailModal,
+    handleEventClick,
+    loading,
   };
 };
