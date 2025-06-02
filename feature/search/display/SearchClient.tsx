@@ -1,181 +1,44 @@
 /*───────────────────────────────────────────────*/
-/*  feature/search/display/SearchClient.tsx      */
+/* feature/search/display/SearchClient.tsx      */
 /*───────────────────────────────────────────────*/
 "use client";
 
 import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { useSearch } from "../hooks/useSearch";
+import { Item, SearchProps } from "../types/types";
+import CenteredLoadingSpinner from "@/components/ui/centered-loading-spinner";
 
 /*─────────────────────*
- *  型宣言
+ * メインコンポーネント
  *─────────────────────*/
-type FilterType = "" | "positive" | "negative";
-type SortOrder = "asc" | "desc";
+const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
+  const {
+    query,
+    type,
+    activeSection,
+    items,
+    loading,
 
-interface Item {
-  id: number;
-  label: string;
-  weight: number;
-  like_count: number;
-  liked: boolean;
-  isHappy: boolean;
-}
+    setQuery,
+    setActiveSection,
 
-interface Props {
-  initialQuery: string;
-  initialType: FilterType;
-}
-
-/*─────────────────────*
- *  Supabase ブラウザクライアント
- *─────────────────────*/
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-);
-
-/*─────────────────────*
- *  メインコンポーネント
- *─────────────────────*/
-const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
-  /* URL パラメータ */
-  const searchParams = useSearchParams();
-  const qParam = searchParams.get("q") ?? "";
-  const typeParam = (searchParams.get("type") ?? "") as FilterType;
-
-  /* フォーム state */
-  const [query, setQuery] = React.useState<string>(initialQuery);
-  const [type, setType] = React.useState<FilterType>(initialType);
-  const [activeSection, setActiveSection] = React.useState<"all" | "happy" | "bad">("happy");
-
-  /* 検索結果 state */
-  const [items, setItems] = React.useState<{ happy: Item[]; bad: Item[] }>({
-    happy: [],
-    bad: [],
-  });
-  const [loading, setLoading] = React.useState<boolean>(false);
-
-  /* URL → フォーム同期 */
-  React.useEffect(() => {
-    setQuery(qParam);
-    setType(typeParam);
-  }, [qParam, typeParam]);
-
-  /* URL 変更時にデータ再取得 */
-  React.useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-
-      /* ① Action 取得（フィルタ適用） */
-      let q = supabase
-        .from("Action")
-        .select("aid, action_name, happiness_change");
-
-      if (qParam) q = q.ilike("action_name", `%${qParam}%`);
-      if (typeParam === "positive") q = q.gt("happiness_change", 0);
-      if (typeParam === "negative") q = q.lt("happiness_change", 0);
-
-      const { data: actions = [] } = await q;
-
-      /* ② Like 行を取得して集計 */
-      const aidList = (actions ?? []).map((a) => a.aid);
-      const { data: likeRows = [] } = await supabase
-        .from("Like")
-        .select("aid, uid")
-        .in("aid", aidList);
-
-      const likeMap: Record<number, number> = {};
-      (likeRows ?? []).forEach(
-        (r) => (likeMap[r.aid] = (likeMap[r.aid] ?? 0) + 1)
-      );
-
-      /* ログインユーザの liked セット */
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const uid = user?.id;
-      const likedSet = new Set<number>();
-      if (uid)
-        (likeRows ?? []).forEach((r) => {
-          if (r.uid === uid) likedSet.add(r.aid);
-        });
-
-      /* ③ 整形・振り分け */
-      const all: Item[] = (actions ?? []).map((a: any) => ({
-        id: a.aid,
-        label: a.action_name,
-        weight: a.happiness_change,
-        like_count: likeMap[a.aid] ?? 0,
-        liked: likedSet.has(a.aid),
-        isHappy: a.happiness_change > 0,
-      }));
-
-      setItems({
-        happy: all
-          .filter((i) => i.isHappy)
-          .sort((a, b) => b.like_count - a.like_count),
-        bad: all
-          .filter((i) => !i.isHappy)
-          .sort((a, b) => b.like_count - a.like_count),
-      });
-
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [qParam, typeParam]);
-
-  /* URL 書き換えだけで "検索" */
-  const router = useRouter();
-  const runSearch = () => {
-    const p = new URLSearchParams();
-    if (query) p.set("q", query);
-    if (type) p.set("type", type);
-    router.push(`/search${p.size ? `?${p.toString()}` : ""}`);
-  };
-
-  /* いいね／いいね解除 */
-  const toggleLike = async (aid: number, liked: boolean) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      alert("ログインしてください");
-      return;
-    }
-
-    /* 楽観的更新 */
-    setItems((prev) => {
-      const upd = (arr: Item[]) =>
-        arr.map((i) =>
-          i.id === aid
-            ? {
-                ...i,
-                liked: !liked,
-                like_count: i.like_count + (liked ? -1 : 1),
-              }
-            : i
-        );
-      return { happy: upd(prev.happy), bad: upd(prev.bad) };
-    });
-
-    if (liked) {
-      await supabase.from("Like").delete().eq("uid", user.id).eq("aid", aid);
-    } else {
-      await supabase.from("Like").insert({ uid: user.id, aid });
-    }
-  };
+    runSearch,
+    toggleLike,
+  } = useSearch({ initialQuery, initialType });
 
   /* カード描画 */
+  // ===== MODIFIED SECTION START =====
   const renderCard = (i: Item) => (
     <li
       key={i.id}
-      className="text-black border rounded p-4 flex justify-between bg-white shadow-sm hover:shadow-md transition-shadow"
+      className="text-black border rounded-lg p-4 flex justify-between bg-white shadow-sm hover:shadow-md transition-shadow"
     >
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-black truncate">{i.label}</p>
-        <p className="text-sm text-black">
+        {/* 행동명 (i.label) 텍스트 크기를 text-lg로 변경 */}
+        <p className="text-lg font-medium text-black truncate azuki-font">
+          {i.label}
+        </p>
+        <p className="text-sm text-black azuki-font">
           幸福度: {i.weight > 0 ? "+" : ""}
           {i.weight}
         </p>
@@ -188,16 +51,17 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
         <span className={i.isHappy ? "text-red-700" : "text-blue-700"}>
           {i.isHappy ? (i.liked ? "❤️" : "🤍") : i.liked ? "💙" : "🤍"}
         </span>
-        <span className="text-sm">{i.like_count}</span>
+        <span className="text-sm azuki-font">{i.like_count}</span>
       </button>
     </li>
   );
+  // ===== MODIFIED SECTION END =====
 
   /*─────────────────────*
-   *  JSX
+   * JSX
    *─────────────────────*/
   return (
-    <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 pb-96 sm:pb-64 min-h-[calc(100vh-200px)]">
+    <section className="flex flex-col h-screen max-w-4xl mx-auto p-4 sm:p-6">
       {/* ── 検索バー ─────────────────── */}
       <div className="flex gap-2 bg-white p-4 rounded border sticky top-4 z-10">
         <input
@@ -217,47 +81,67 @@ const SearchClient: React.FC<Props> = ({ initialQuery, initialType }) => {
       {/* ── ソートボタン ─────────────────── */}
       <div className="flex gap-2 text-lg mb-2">
         <button
-          onClick={() => setActiveSection(activeSection === "happy" ? "all" : "happy")}
+          onClick={() =>
+            setActiveSection(activeSection === "happy" ? "all" : "happy")
+          }
           className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
-            activeSection === "happy" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+            activeSection === "happy"
+              ? "bg-fuchsia-100"
+              : "bg-white hover:bg-gray-50"
           }`}
         >
           <span className="text-2xl">❤️</span>
-          <span className="text-black">Happy</span>
+          <span className="text-black">嬉しい</span>
         </button>
 
         <button
-          onClick={() => setActiveSection(activeSection === "bad" ? "all" : "bad")}
+          onClick={() =>
+            setActiveSection(activeSection === "bad" ? "all" : "bad")
+          }
           className={`flex-1 inline-flex items-center justify-center gap-2 font-bold p-3 rounded-lg border shadow-sm transition-colors ${
-            activeSection === "bad" ? "bg-fuchsia-100" : "bg-white hover:bg-gray-50"
+            activeSection === "bad"
+              ? "bg-fuchsia-100"
+              : "bg-white hover:bg-gray-50"
           }`}
         >
           <span className="text-2xl">💙</span>
-          <span className="text-black">Bad</span>
+          <span className="text-black">悲しい</span>
         </button>
       </div>
 
       {/* ── 検索結果 ─────────────────── */}
-      {loading ? (
-        <p className="text-center text-black pt-8">読み込み中…</p>
-      ) : items.happy.length + items.bad.length === 0 ? (
-        <p className="text-black text-center pt-8">該当する項目がありません</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          {/* Happyセクション */}
-          {(activeSection === "all" || activeSection === "happy") && type !== "negative" && (
-            <div className="space-y-4">
-              <ul className="space-y-4">{items.happy.map(renderCard)}</ul>
+      <div className="flex-1 overflow-hidden">
+        {loading ? (
+          <CenteredLoadingSpinner />
+        ) : items.happy.length + items.bad.length === 0 ? (
+          <p className="text-black text-center pt-8">該当する項目がありません</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 h-full">
+            {/* Happyセクション */}
+            <div className="h-full overflow-hidden">
+              {(activeSection === "all" || activeSection === "happy") &&
+                type !== "negative" && (
+                  <div className="h-full overflow-y-auto pr-2">
+                    <ul className="space-y-4">
+                      {items.happy.map(renderCard)}
+                    </ul>
+                  </div>
+                )}
             </div>
-          )}
-          {/* Badセクション */}
-          {(activeSection === "all" || activeSection === "bad") && type !== "positive" && (
-            <div className="space-y-4">
-              <ul className="space-y-4">{items.bad.map(renderCard)}</ul>
+            {/* Badセクション */}
+            <div className="h-full overflow-hidden">
+              {(activeSection === "all" || activeSection === "bad") &&
+                type !== "positive" && (
+                  <div className="h-full overflow-y-auto pr-2">
+                    <ul className="space-y-4">
+                      {items.bad.map(renderCard)}
+                    </ul>
+                  </div>
+                )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </section>
   );
 };
