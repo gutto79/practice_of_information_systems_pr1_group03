@@ -82,7 +82,7 @@ def create_slideshow():
                 fontsize=200,
                 color='red' if happiness_change < 0 else 'blue',
                 stroke_width=2,
-                font='Arial'  # 日本語対応のフォントを指定
+                font="Rounded M+ 1c"
             )
             .set_position(("right", "top"))
             .set_duration(base_duration + crossfade_duration)
@@ -91,7 +91,7 @@ def create_slideshow():
         # 3つのクリップを合成
         video_clip = CompositeVideoClip([
             image_clip,
-            happiness_txt_clip
+            happiness_txt_clip.set_opacity(0.5)
         ])
 
         # 最初のクリップ以外にクロスフェード効果を適用
