@@ -60,10 +60,9 @@ const RegisterDisplay: React.FC = () => {
               onChange={(e) => setGender(e.target.value)}
               className="w-full p-2 border rounded-md"
             >
-              <option value="男性">男性</option>
-              <option value="女性">女性</option>
-              <option value="その他">その他</option>
-              <option value="回答しない">回答しない</option>
+              <option value="male">男性</option>
+              <option value="female">女性</option>
+              <option value="other">その他</option>
             </select>
           </div>
 
