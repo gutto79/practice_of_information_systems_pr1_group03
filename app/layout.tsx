@@ -24,12 +24,12 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "モバイルアプリ",
-  description: "スマホアプリ想定のレイアウト",
+  title: "HapiViz",
+  description: "HapiViz",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "モバイルアプリ",
+    title: "HapiViz",
   },
 };
 

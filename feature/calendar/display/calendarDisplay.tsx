@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 
 // FullCalendarコンポーネント。
 import FullCalendar from "@fullcalendar/react";
@@ -28,7 +26,6 @@ const CalendarDisplay = () => {
     setSelectedEvent,
     eventDetailModal,
     handleEventClick,
-    loading,
   } = useCalendarFunc();
 
   // モーダルを閉じる際の処理
