@@ -61,7 +61,7 @@ const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
    * JSX
    *─────────────────────*/
   return (
-    <section className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 pb-96 sm:pb-64 min-h-[calc(100vh-200px)]">
+    <section className="flex flex-col h-screen max-w-4xl mx-auto p-4 sm:p-6">
       {/* ── 検索バー ─────────────────── */}
       <div className="flex gap-2 bg-white p-4 rounded border sticky top-4 z-10">
         <input
@@ -110,28 +110,38 @@ const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
       </div>
 
       {/* ── 検索結果 ─────────────────── */}
-      {loading ? (
-        <CenteredLoadingSpinner />
-      ) : items.happy.length + items.bad.length === 0 ? (
-        <p className="text-black text-center pt-8">該当する項目がありません</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          {/* Happyセクション */}
-          {(activeSection === "all" || activeSection === "happy") &&
-            type !== "negative" && (
-              <div className="space-y-4">
-                <ul className="space-y-4">{items.happy.map(renderCard)}</ul>
-              </div>
-            )}
-          {/* Badセクション */}
-          {(activeSection === "all" || activeSection === "bad") &&
-            type !== "positive" && (
-              <div className="space-y-4">
-                <ul className="space-y-4">{items.bad.map(renderCard)}</ul>
-              </div>
-            )}
-        </div>
-      )}
+      <div className="flex-1 overflow-hidden">
+        {loading ? (
+          <CenteredLoadingSpinner />
+        ) : items.happy.length + items.bad.length === 0 ? (
+          <p className="text-black text-center pt-8">該当する項目がありません</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 h-full">
+            {/* Happyセクション */}
+            <div className="h-full overflow-hidden">
+              {(activeSection === "all" || activeSection === "happy") &&
+                type !== "negative" && (
+                  <div className="h-full overflow-y-auto pr-2">
+                    <ul className="space-y-4">
+                      {items.happy.map(renderCard)}
+                    </ul>
+                  </div>
+                )}
+            </div>
+            {/* Badセクション */}
+            <div className="h-full overflow-hidden">
+              {(activeSection === "all" || activeSection === "bad") &&
+                type !== "positive" && (
+                  <div className="h-full overflow-y-auto pr-2">
+                    <ul className="space-y-4">
+                      {items.bad.map(renderCard)}
+                    </ul>
+                  </div>
+                )}
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 };
