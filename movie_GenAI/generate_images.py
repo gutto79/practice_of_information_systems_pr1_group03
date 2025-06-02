@@ -31,7 +31,7 @@ def get_partner_uid(uid):
     if response.data:
         return response.data['uid2'] if response.data['uid1'] == uid else response.data['uid1']
     return None
-# 過去1ヶ月分のイベントを取得
+# 与えられた日数分のイベントを取得
 # 現状uid固定
 def get_monthly_events(uid,days):
     end_date = datetime.now()
@@ -121,8 +121,15 @@ def generate_images(uid, days):
     
     # Calendar配列が空でないことを確認してからソート
     all_events = [event for event in all_events if event.get('Calendar') and len(event['Calendar']) > 0]
+    
+    # 幸福度変化の絶対値でソート
+    all_events.sort(key=lambda x: abs(x['happiness_change']), reverse=True)
+    
+    # 最大10件に制限(happiness_changeの絶対値が大きい順)
+    all_events = all_events[:10]
+    # 時系列順にソート
     all_events.sort(key=lambda x: x['Calendar'][0]['timestamp'])
-  
+    
     for i, event in enumerate(all_events):
         prompt = generate_prompt(event)
         image = generate_image_with_gpt(prompt)
