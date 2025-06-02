@@ -56,18 +56,43 @@ export const getBorderColor = (gender: string | null) => {
 export const formatRelativeTime = (timestamp: string): string => {
   const date = new Date(timestamp);
   const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-  const diffMinutes = Math.floor(diffTime / (1000 * 60));
+  
+  // 检查时间戳是否有效
+  if (isNaN(date.getTime())) {
+    return "無効な時間";
+  }
 
-  if (diffDays > 0) {
-    return diffDays === 1 ? "昨日" : `${diffDays}日前`;
-  } else if (diffHours > 0) {
-    return `${diffHours}時間前`;
-  } else if (diffMinutes > 0) {
-    return `${diffMinutes}分前`;
-  } else {
+  const diffTime = date.getTime() - now.getTime();
+  const diffDays = Math.floor(Math.abs(diffTime) / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor(Math.abs(diffTime) / (1000 * 60 * 60));
+  const diffMinutes = Math.floor(Math.abs(diffTime) / (1000 * 60));
+
+  // 未来时间
+  if (diffTime > 0) {
+    if (diffDays > 0) {
+      return diffDays === 1 ? "明日" : `${diffDays}日後`;
+    } else if (diffHours > 0) {
+      return `${diffHours}時間後`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes}分後`;
+    } else {
+      return "まもなく";
+    }
+  }
+  // 过去时间
+  else if (diffTime < 0) {
+    if (diffDays > 0) {
+      return diffDays === 1 ? "昨日" : `${diffDays}日前`;
+    } else if (diffHours > 0) {
+      return `${diffHours}時間前`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes}分前`;
+    } else {
+      return "たった今";
+    }
+  }
+  // 现在
+  else {
     return "たった今";
   }
 };

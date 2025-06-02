@@ -106,7 +106,10 @@ const HomeDisplay: React.FC = () => {
           />
 
           {/* 最近の活動 */}
-          <RecentActivities actions={recentActions} />
+          <RecentActivities 
+            actions={recentActions} 
+            name={userName}
+          />
         </div>
       </div>
 
