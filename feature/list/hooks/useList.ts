@@ -169,6 +169,10 @@ export const useList = (): UseListReturn => {
 
       setConfirmingItem(null);
 
+      // カレンダーに追加
+      const timestamp = getJstIsoString();
+      await listService.addToCalendar(confirmingItem.id, timestamp);
+
       // 幸福度の変化情報を返す
       return {
         happinessChange: confirmingItem.originalHappinessChange,
@@ -227,10 +231,6 @@ export const useList = (): UseListReturn => {
           setLoading(false);
           return;
         }
-
-        // カレンダーに追加
-        const timestamp = getJstIsoString();
-        await listService.addToCalendar(actionId, timestamp);
       }
 
       // フォームをリセットして、アクションを再取得

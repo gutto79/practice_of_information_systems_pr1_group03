@@ -23,7 +23,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full text-center">
         <p className="text-lg font-semibold mb-4 text-black">
-          「{item.name}」というイベントがありましたか？
+          「{item.name}」という出来事が起きましたか？
         </p>
         <div className="flex justify-center gap-4">
           <button

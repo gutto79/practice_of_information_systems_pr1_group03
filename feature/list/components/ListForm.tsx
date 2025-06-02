@@ -55,7 +55,7 @@ const ListForm: React.FC<ListFormProps> = ({
     <div>
       <input
         type="text"
-        placeholder="出来事の名前"
+        placeholder="出来事の名前(具体的に!)"
         value={actionName}
         onChange={(e) => onActionNameChange(e.target.value)}
         className="border p-3 rounded w-full mb-6 text-black text-lg"

@@ -232,6 +232,7 @@ export const addToCalendar = async (
         timestamp,
       },
     ]);
+    console.log(actionId, timestamp, "addToCalendar");
 
     if (error) {
       console.error("Calendar登録エラー:", error);

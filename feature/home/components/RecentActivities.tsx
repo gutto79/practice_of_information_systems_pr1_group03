@@ -11,8 +11,13 @@ interface RecentActivitiesProps {
 /**
  * 最近のアクティビティを表示するコンポーネント
  */
-const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions, name }) => {
-  const [selectedActivity, setSelectedActivity] = useState<RecentAction | null>(null);
+const RecentActivities: React.FC<RecentActivitiesProps> = ({
+  actions,
+  name,
+}) => {
+  const [selectedActivity, setSelectedActivity] = useState<RecentAction | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleActivityClick = (action: RecentAction) => {
@@ -27,7 +32,7 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions, name }) =>
 
   return (
     <div className="my-4 bg-white rounded-lg shadow p-2">
-      <h3 className="text-lg font-medium text-gray-700 mb-2 azuki-font">
+      <h3 className="text-lg font-medium text-gray-700 mb-2 text-center azuki-font">
         最近の「{name || "自分"}」の行動
       </h3>
       <ul className="space-y-2">
@@ -39,7 +44,9 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions, name }) =>
               className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-lg azuki-font gap-1 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg px-2"
             >
               <div className="flex items-center justify-between w-full min-w-0">
-                <span className="text-gray-600 truncate flex-1 min-w-0">{action.action_name}</span>
+                <span className="text-gray-600 truncate flex-1 min-w-0">
+                  {action.action_name}
+                </span>
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-lg whitespace-nowrap w-10 text-right ${
