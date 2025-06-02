@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { RecentAction } from "../types/types";
 import { formatRelativeTime } from "../utils/utils";
+import ActivityDetailModal from "./ActivityDetailModal";
 
 interface RecentActivitiesProps {
   actions: RecentAction[];
@@ -11,6 +12,19 @@ interface RecentActivitiesProps {
  * 最近のアクティビティを表示するコンポーネント
  */
 const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions, name }) => {
+  const [selectedActivity, setSelectedActivity] = useState<RecentAction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleActivityClick = (action: RecentAction) => {
+    setSelectedActivity(action);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedActivity(null);
+  };
+
   return (
     <div className="my-4 bg-white rounded-lg shadow p-2">
       <h3 className="text-lg font-medium text-gray-700 mb-2 azuki-font">
@@ -21,7 +35,8 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions, name }) =>
           actions.map((action, index) => (
             <li
               key={index}
-              className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-lg azuki-font gap-1"
+              onClick={() => handleActivityClick(action)}
+              className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-lg azuki-font gap-1 cursor-pointer hover:bg-gray-50 transition-colors rounded-lg px-2"
             >
               <div className="flex items-center justify-between w-full min-w-0">
                 <span className="text-gray-600 truncate mr-4">{action.action_name}</span>
@@ -49,6 +64,12 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ actions, name }) =>
           </li>
         )}
       </ul>
+
+      <ActivityDetailModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        activity={selectedActivity}
+      />
     </div>
   );
 };
