@@ -72,7 +72,7 @@ const CalendarDisplay = () => {
           headerToolbar={{
             start: "title", // ナビゲーションボタンを左に配置
             center: "", // ビュー切り替えボタンを中央に配置
-            end: "prev,next dayGridMonth,timeGridWeek today", // タイトルを右に配置
+            end: "prev,next today", // タイトルを右に配置
           }}
           ref={ref}
           select={handleSelect}

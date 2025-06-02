@@ -53,12 +53,6 @@
   flex-direction: column; /* 上下に分ける */
 }
 
-.fc-timeGridWeek-view {
-  font-size: 50%;
-  margin-bottom: 4rem; /* フッターとの間隔を確保 */
-  border-radius: 10px;
-  overflow: hidden;
-}
 
 /* カレンダー全体の角を丸くする */
 .fc {

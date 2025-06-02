@@ -160,8 +160,8 @@ export const convertToCalendarEvents = (
           backgroundColor:
             item.User.gender === "male"
               ? isPartner
-                ? "#64b5f6"
-                : "#2196f3"
+                ? "#2196f3"
+                : "#64b5f6"
               : isPartner
               ? "#ff8a80"
               : "#e53935",
