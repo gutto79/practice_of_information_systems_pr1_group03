@@ -187,9 +187,6 @@ export const useMovie = (): UseMovieReturn => {
         // グローバル状態も更新
         setGlobalStatus(completedStatus);
         setGlobalVideoUrl(response.video_url || null);
-
-        // 初期ロード時は完了トーストを表示しない
-        // showToastMessage("動画を取得しました！");
       } else {
         throw new Error("動画のURLを取得できませんでした");
       }
@@ -210,7 +207,12 @@ export const useMovie = (): UseMovieReturn => {
       // グローバル状態も更新
       setGlobalStatus(failedStatus);
 
-      showToastMessage(errorMessage);
+      // SilentErrorの場合はトースト通知をスキップ
+      if (error instanceof movieService.SilentError) {
+        console.log("Silent error occurred:", errorMessage);
+      } else {
+        showToastMessage(errorMessage);
+      }
     } finally {
       updateState({ loading: false });
     }

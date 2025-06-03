@@ -118,7 +118,7 @@ export const useHomeData = () => {
     };
 
     fetchUserData();
-  }, [uid, router]);
+  }, [uid, router, state.partnerId]);
 
   // 招待送信
   const handleSendInvite = async (inviteId: string) => {
