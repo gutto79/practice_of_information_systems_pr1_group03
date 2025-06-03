@@ -34,25 +34,26 @@ const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
       className="text-black border rounded-lg p-4 flex justify-between bg-white shadow-sm hover:shadow-md transition-shadow"
     >
       <div className="flex-1 min-w-0">
-        {/* 행동명 (i.label) 텍스트 크기를 text-lg로 변경 */}
         <p className="text-lg font-medium text-black truncate azuki-font">
           {i.label}
         </p>
-        <p className="text-sm text-black azuki-font">
+      </div>
+
+      <div className="flex items-center gap-4">
+        <p className="text-lg text-black azuki-font whitespace-nowrap">
           幸福度: {i.weight > 0 ? "+" : ""}
           {i.weight}
         </p>
+        <button
+          onClick={() => toggleLike(i.id, i.liked)}
+          className="flex items-center gap-1 focus:outline-none flex-shrink-0"
+        >
+          <span className={i.isHappy ? "text-red-700" : "text-blue-700"}>
+            {i.isHappy ? (i.liked ? "❤️" : "🤍") : i.liked ? "💙" : "🤍"}
+          </span>
+          <span className="text-sm azuki-font">{i.like_count}</span>
+        </button>
       </div>
-
-      <button
-        onClick={() => toggleLike(i.id, i.liked)}
-        className="flex items-center gap-1 focus:outline-none ml-4 flex-shrink-0"
-      >
-        <span className={i.isHappy ? "text-red-700" : "text-blue-700"}>
-          {i.isHappy ? (i.liked ? "❤️" : "🤍") : i.liked ? "💙" : "🤍"}
-        </span>
-        <span className="text-sm azuki-font">{i.like_count}</span>
-      </button>
     </li>
   );
   // ===== MODIFIED SECTION END =====
@@ -116,28 +117,28 @@ const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
         ) : items.happy.length + items.bad.length === 0 ? (
           <p className="text-black text-center pt-8">該当する項目がありません</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 h-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 h-[calc(100vh-16rem)] sm:h-[calc(100vh-16rem)]">
             {/* Happyセクション */}
             <div className="h-full overflow-hidden">
-              {(activeSection === "all" || activeSection === "happy") &&
-                type !== "negative" && (
-                  <div className="h-full overflow-y-auto pr-2">
-                    <ul className="space-y-4">
+              <div className="h-full overflow-y-auto pr-2">
+                {(activeSection === "all" || activeSection === "happy") &&
+                  type !== "negative" && (
+                    <ul className="space-y-4 pt-0">
                       {items.happy.map(renderCard)}
                     </ul>
-                  </div>
-                )}
+                  )}
+              </div>
             </div>
             {/* Badセクション */}
             <div className="h-full overflow-hidden">
-              {(activeSection === "all" || activeSection === "bad") &&
-                type !== "positive" && (
-                  <div className="h-full overflow-y-auto pr-2">
-                    <ul className="space-y-4">
+              <div className="h-full overflow-y-auto pr-2">
+                {(activeSection === "all" || activeSection === "bad") &&
+                  type !== "positive" && (
+                    <ul className="space-y-4 pt-0">
                       {items.bad.map(renderCard)}
                     </ul>
-                  </div>
-                )}
+                  )}
+              </div>
             </div>
           </div>
         )}
