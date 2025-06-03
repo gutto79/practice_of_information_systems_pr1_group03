@@ -59,6 +59,14 @@ export const generateMovie = async (
   }
 };
 
+// トースト通知をスキップするためのエラー型
+export class SilentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SilentError";
+  }
+}
+
 /**
  * 動画を取得する（開発用）
  * @returns 動画のURLを含むレスポンス
@@ -69,7 +77,7 @@ export const getMovie = async (): Promise<MovieResponse> => {
   const response = await fetch(`${fastApiUrl}/api/dummy-video`);
 
   if (!response.ok) {
-    throw new Error("Failed to fetch video");
+    throw new SilentError("Failed to fetch video");
   }
 
   // 检查响应类型

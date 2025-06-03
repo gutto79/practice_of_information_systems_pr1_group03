@@ -65,7 +65,10 @@ export const MovieProvider: React.FC<{ children: ReactNode }> = ({
       showToastMessage("動画生成が完了しました！");
       // 一度表示したらリセット
       setShouldShowCompletionToast(false);
-    } else if (status?.status === "failed") {
+    } else if (
+      status?.status === "failed" &&
+      !status.message?.includes("Failed to fetch video")
+    ) {
       showToastMessage(status.message || "エラーが発生しました");
     }
   }, [status, shouldShowCompletionToast]);
