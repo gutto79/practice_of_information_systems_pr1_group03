@@ -37,23 +37,21 @@ const SearchClient: React.FC<SearchProps> = ({ initialQuery, initialType }) => {
         <p className="text-lg font-medium text-black truncate azuki-font">
           {i.label}
         </p>
+        <p className={`text-lg azuki-font ${i.isHappy ? "text-red-700" : "text-blue-700"}`}>
+          幸福度: {i.weight > 0 ? "+" : ""}
+          <span className="font-bold">{i.weight}</span>
+        </p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <p className="text-lg text-black azuki-font whitespace-nowrap">
-          幸福度: {i.weight > 0 ? "+" : ""}
-          {i.weight}
-        </p>
-        <button
-          onClick={() => toggleLike(i.id, i.liked)}
-          className="flex items-center gap-1 focus:outline-none flex-shrink-0"
-        >
-          <span className={i.isHappy ? "text-red-700" : "text-blue-700"}>
-            {i.isHappy ? (i.liked ? "❤️" : "🤍") : i.liked ? "💙" : "🤍"}
-          </span>
-          <span className="text-sm azuki-font">{i.like_count}</span>
-        </button>
-      </div>
+      <button
+        onClick={() => toggleLike(i.id, i.liked)}
+        className="flex items-center gap-1 focus:outline-none ml-4 flex-shrink-0"
+      >
+        <span className={i.isHappy ? "text-red-700" : "text-blue-700"}>
+          {i.isHappy ? (i.liked ? "❤️" : "🤍") : i.liked ? "💙" : "🤍"}
+        </span>
+        <span className="text-sm azuki-font">{i.like_count}</span>
+      </button>
     </li>
   );
   // ===== MODIFIED SECTION END =====
